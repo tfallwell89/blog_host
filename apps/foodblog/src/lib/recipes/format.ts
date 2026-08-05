@@ -58,3 +58,15 @@ const dateFormatter = new Intl.DateTimeFormat('en-GB', {
 export function formatDate(date: Date | null | undefined): string {
   return date ? dateFormatter.format(date) : '—';
 }
+
+const longDateFormatter = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+/** Publication date as readers see it. Fixed to UTC so it never shifts. */
+export function formatLongDate(date: Date | string): string {
+  return longDateFormatter.format(new Date(date));
+}

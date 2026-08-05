@@ -1,8 +1,19 @@
+/*
+ * The recipe canvas.
+ *
+ * The canvas is the published recipe page: same markup, same theme tokens,
+ * loaded from site.css. Nothing here restyles the recipe itself — it only
+ * adds the affordances that let a creator change it in place, so the editor
+ * cannot drift away from what a reader gets.
+ */
+
 .editor {
   display: flex;
   flex-direction: column;
-  gap: var(--ui-space-5);
+  gap: var(--ui-space-4);
 }
+
+/* Action bar -------------------------------------------------------------- */
 
 .editor__bar {
   position: sticky;
@@ -11,7 +22,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--ui-space-3);
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   padding-block: var(--ui-space-3);
   background-color: color-mix(in srgb, var(--ui-color-bg) 92%, transparent);
@@ -19,6 +30,7 @@
   border-bottom: 1px solid var(--ui-color-border);
 }
 
+.editor__bar-context,
 .editor__bar-actions {
   display: flex;
   flex-wrap: wrap;
@@ -26,162 +38,343 @@
   align-items: center;
 }
 
-.editor__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 20rem;
-  gap: var(--ui-space-5);
-  align-items: start;
-}
-
-.editor__main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-5);
-  min-width: 0;
-}
-
-.editor__aside {
-  position: sticky;
-  top: 6rem;
-}
-
-.editor-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-4);
-  padding: var(--ui-space-5);
-  background-color: var(--ui-color-surface);
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-}
-
-.editor-section > .ui-button {
-  align-self: flex-start;
-}
-
-.editor-section__head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-1);
-}
-
-.editor-section__title {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 700;
-}
-
-.editor-section__intro {
-  margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: var(--ui-color-text-muted);
-}
-
-.editor__field-pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.editor__bar-context {
   gap: var(--ui-space-3);
 }
 
-.editor__image-preview {
-  display: block;
-  width: 100%;
-  height: 9rem;
-  object-fit: cover;
-  background-color: var(--ui-color-surface-muted);
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-}
-
-/* Ingredient and instruction groups -------------------------------------- */
-
-.group-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-4);
-}
-
-.group-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-3);
-  padding: var(--ui-space-4);
-  margin: 0;
-  background-color: var(--ui-color-surface-muted);
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-}
-
-.group-card > .ui-button {
-  align-self: flex-start;
-}
-
-.group-card__head {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-space-3);
-  align-items: flex-end;
-  justify-content: space-between;
-}
-
-.group-card__title-field {
-  display: flex;
-  flex: 1 1 16rem;
-  flex-direction: column;
-  gap: var(--ui-space-2);
-}
-
-.reorder {
-  display: flex;
-  gap: 0.25rem;
-  align-items: center;
-}
-
-.item-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-2);
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.item-row {
-  display: grid;
-  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
-  gap: var(--ui-space-2);
-  align-items: start;
-}
-
-.item-row__marker {
-  padding-top: 0.6rem;
+.editor__live-link,
+.editor__saving {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--ui-color-text-muted);
-  text-align: right;
 }
 
-.item-row__control {
+.editor__preview-note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ui-color-text-muted);
+}
+
+/* Canvas ------------------------------------------------------------------ */
+
+.editor__canvas {
+  min-height: 0;
+  padding-block: var(--ui-space-7);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+/* Inline fields ----------------------------------------------------------- */
+
+.editable {
+  /* Padding is cancelled by an equal negative margin, so an inline field sits
+     exactly where the text it replaces would sit. */
+  --editable-padding-x: 0.35rem;
+  --editable-padding-y: 0.1rem;
+
+  display: block;
+  margin-block: calc(-1 * (var(--editable-padding-y) + 1px));
+  margin-inline: calc(-1 * (var(--editable-padding-x) + 1px));
+}
+
+.editable__box {
+  display: grid;
+}
+
+.editable__box::after,
+.editable__input {
+  grid-area: 1 / 1;
+  padding: var(--editable-padding-y) var(--editable-padding-x);
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  letter-spacing: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  border: 1px solid transparent;
+  border-radius: var(--site-radius);
+}
+
+/* Mirrors the value so the field is always exactly as tall as its content. */
+.editable__box::after {
+  visibility: hidden;
+  content: attr(data-replica);
+}
+
+.editable__input {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  resize: none;
+  background-color: transparent;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.editable__input:hover {
+  background-color: color-mix(in srgb, var(--site-accent) 5%, transparent);
+  border-color: color-mix(in srgb, var(--site-border) 80%, transparent);
+}
+
+.editable__input:focus {
+  background-color: var(--site-surface);
+  border-color: var(--site-accent);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--site-accent) 16%, transparent);
+}
+
+.editable__input::placeholder {
+  color: color-mix(in srgb, var(--site-muted) 60%, transparent);
+  opacity: 1;
+}
+
+.editable--invalid .editable__input {
+  border-color: var(--ui-color-danger);
+}
+
+.editable__select {
+  max-width: 100%;
+  padding: var(--editable-padding-y) var(--editable-padding-x);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--site-radius);
+}
+
+.editable__select:hover {
+  border-color: color-mix(in srgb, var(--site-border) 80%, transparent);
+}
+
+.editable__select:focus {
+  border-color: var(--site-accent);
+  outline: none;
+}
+
+.editable__error {
+  display: block;
+  padding-inline: var(--editable-padding-x);
+  margin-top: 0.25rem;
+  font-family: var(--ui-font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ui-color-danger);
+  letter-spacing: normal;
+}
+
+/* Canvas controls --------------------------------------------------------- */
+
+.canvas-controls {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 0.15rem;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.recipe--editing li:hover .canvas-controls,
+.recipe--editing li:focus-within .canvas-controls,
+.recipe-group__head:hover .canvas-controls,
+.recipe-group__head:focus-within .canvas-controls {
+  opacity: 1;
+}
+
+.canvas-control {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  font-family: var(--ui-font-sans);
+  font-size: 0.8125rem;
+  line-height: 1;
+  color: var(--site-muted);
+  cursor: pointer;
+  background-color: var(--site-surface);
+  border: 1px solid var(--site-border);
+  border-radius: var(--ui-radius-sm);
+}
+
+.canvas-control:hover:not(:disabled) {
+  color: var(--site-accent);
+  border-color: var(--site-accent);
+}
+
+.canvas-control--danger:hover:not(:disabled) {
+  color: var(--ui-color-danger);
+  border-color: var(--ui-color-danger);
+}
+
+.canvas-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.canvas-add {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  margin-top: var(--ui-space-3);
+  font-family: var(--ui-font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--site-muted);
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px dashed var(--site-border);
+  border-radius: var(--site-radius);
+}
+
+.canvas-add:hover {
+  color: var(--site-accent);
+  border-color: var(--site-accent);
+}
+
+.canvas-add--block {
+  justify-content: center;
+  width: 100%;
+  padding-block: 0.55rem;
+  margin-top: var(--ui-space-4);
+}
+
+/* Editing affordances on the recipe itself -------------------------------- */
+
+.recipe__address {
   display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-1);
+  align-items: center;
+  margin: 0;
+  font-family: var(--ui-font-sans);
+  font-size: 0.8125rem;
+  color: var(--site-muted);
+}
+
+.recipe__address-prefix {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.recipe__address-slug {
+  flex: 1;
   min-width: 0;
 }
 
-.item-row .reorder {
-  padding-top: 0.15rem;
+.recipe-photo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+}
+
+.recipe-photo__empty {
+  display: grid;
+  gap: var(--ui-space-1);
+  place-items: center;
+  padding: var(--ui-space-7) var(--ui-space-5);
+  color: var(--site-muted);
+  text-align: center;
+  background-color: color-mix(in srgb, var(--site-border) 18%, transparent);
+  border: 1px dashed var(--site-border);
+  border-radius: var(--site-radius);
+}
+
+.recipe-photo__glyph {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.recipe-photo__prompt {
+  margin: 0;
+  font-weight: 600;
+  color: var(--site-text);
+}
+
+.recipe-photo__hint {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.recipe-photo__link {
+  display: flex;
+  gap: var(--ui-space-2);
+  align-items: center;
+}
+
+.recipe-photo__field {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--ui-font-sans);
+  font-size: 0.8125rem;
+  color: var(--site-muted);
+}
+
+.recipe--editing .recipe__fact-value {
+  display: flex;
+  gap: 0.25rem;
+  align-items: baseline;
+}
+
+.recipe__fact-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.recipe__fact-unit {
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--site-muted);
+}
+
+.recipe--editing .recipe__intro .editable,
+.recipe--editing .recipe__notes .editable {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
+.recipe--editing .recipe__notes .editable {
+  margin-top: var(--ui-space-3);
+}
+
+.recipe-group__head {
+  display: flex;
+  gap: var(--ui-space-2);
+  align-items: center;
+  margin-bottom: var(--ui-space-3);
+}
+
+.recipe-group__head .recipe__group-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.recipe--editing .ingredient-list li,
+.recipe--editing .step-list li {
+  display: flex;
+  gap: var(--ui-space-2);
+  align-items: flex-start;
+}
+
+.recipe--editing .recipe-line {
+  flex: 1;
+  min-width: 0;
+}
+
+.recipe--editing .ingredient-list li .canvas-controls,
+.recipe--editing .step-list li .canvas-controls {
+  padding-top: 0.2rem;
 }
 
 /* Responsive -------------------------------------------------------------- */
 
-@media (max-width: 64rem) {
-  .editor__grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .editor__aside {
-    position: static;
+@media (hover: none) {
+  .canvas-controls {
+    opacity: 1;
   }
 }
 
@@ -190,12 +383,11 @@
     position: static;
   }
 
-  .item-row {
-    grid-template-columns: 1.25rem minmax(0, 1fr);
+  .editor__canvas {
+    padding-block: var(--ui-space-5);
   }
 
-  .item-row .reorder {
-    grid-column: 2;
-    justify-content: flex-end;
+  .canvas-controls {
+    opacity: 1;
   }
 }

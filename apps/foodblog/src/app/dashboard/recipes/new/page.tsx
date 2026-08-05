@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 
-import { emptyRecipeState } from '@/components/recipe-editor/editor-model';
-import { RecipeEditor } from '@/components/recipe-editor/recipe-editor';
+import { emptyRecipeDocument } from '@/components/recipe/recipe-document';
+import { RecipeEditor } from '@/components/recipe/recipe-editor';
 import { requireBlog } from '@/lib/blog/guards';
+import { themeAttribute } from '@/lib/blog/themes';
 
+// The canvas is the published page, so it needs the public stylesheet too.
+import '@/styles/site.css';
 import '@/styles/editor.css';
 
 export const metadata: Metadata = {
@@ -15,9 +18,14 @@ export default async function NewRecipePage() {
 
   return (
     <RecipeEditor
-      subdomain={blog.subdomain}
-      initialState={emptyRecipeState()}
+      blog={{
+        subdomain: blog.subdomain,
+        authorName: blog.authorName,
+        theme: themeAttribute(blog.theme),
+      }}
+      initialRecipe={emptyRecipeDocument()}
       initialStatus="DRAFT"
+      initialPublishedAt={null}
     />
   );
 }
