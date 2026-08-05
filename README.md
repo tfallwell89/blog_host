@@ -60,7 +60,7 @@ draft):
 | ------------------- | ----------------- |
 | `jane@bloghost.dev` | `RoastedGarlic22` |
 
-Its public blog lives at [`/site/janes-kitchen`](http://localhost:3000/site/janes-kitchen), and the
+Its public blog lives at [`/janes-kitchen`](http://localhost:3000/janes-kitchen), and the
 dashboard is at [`/dashboard`](http://localhost:3000/dashboard).
 
 ---
@@ -112,20 +112,20 @@ packages contain nothing that knows what a recipe is.
 
 ### Routes
 
-| Route                              | Purpose                                         |
-| ---------------------------------- | ----------------------------------------------- |
-| `/`                                | Marketing landing page                          |
-| `/sign-up`, `/sign-in`             | Accounts                                        |
-| `/onboarding`                      | Create a food blog                              |
-| `/dashboard`                       | Overview                                        |
-| `/dashboard/recipes`               | Recipe management (with draft/published filter) |
-| `/dashboard/recipes/new`           | Recipe editor                                   |
-| `/dashboard/recipes/[recipeId]`    | Recipe editor for an existing recipe            |
-| `/dashboard/appearance`            | Theme switching                                 |
-| `/dashboard/settings`              | Blog name, description, address, author         |
-| `/site/[subdomain]`                | Public recipe index                             |
-| `/site/[subdomain]/recipes/[slug]` | Public recipe page                              |
-| `/site/[subdomain]/about`          | Public about page                               |
+| Route                           | Purpose                                         |
+| ------------------------------- | ----------------------------------------------- |
+| `/`                             | Marketing landing page                          |
+| `/sign-up`, `/sign-in`          | Accounts                                        |
+| `/onboarding`                   | Create a food blog                              |
+| `/dashboard`                    | Overview                                        |
+| `/dashboard/recipes`            | Recipe management (with draft/published filter) |
+| `/dashboard/recipes/new`        | Recipe editor                                   |
+| `/dashboard/recipes/[recipeId]` | Recipe editor for an existing recipe            |
+| `/dashboard/appearance`         | Theme switching                                 |
+| `/dashboard/settings`           | Blog name, description, address, author         |
+| `/[subdomain]`                  | Public recipe index                             |
+| `/[subdomain]/recipes/[slug]`   | Public recipe page                              |
+| `/[subdomain]/about`            | Public about page                               |
 
 ---
 
@@ -139,10 +139,12 @@ public recipe search field, the delete confirmation, and the small forms that ne
 Zod before touching the database. Client-side niceties (auto-generated slugs, live previews) are
 conveniences, never the security boundary.
 
-**Tenant routing has one seam.** Hosted blogs are served from `/site/<subdomain>` so everything
+**Tenant routing has one seam.** Hosted blogs are served from `/<subdomain>` so everything
 runs on a single origin locally. Every public link is produced by the helpers in
 `src/lib/tenant.ts`; moving to real `<subdomain>.bloghost.app` hosts means changing those helpers
-and adding a middleware rewrite, not hunting through components.
+and adding a middleware rewrite, not hunting through components. The platform's own routes take
+precedence over `/[subdomain]`, so adding a top-level route also means adding it to the reserved
+subdomain list in `src/lib/blog/validation.ts`.
 
 **Auth is deliberately small.** Passwords are hashed with scrypt (`scrypt$N$r$p$salt$hash`, so cost
 parameters can be raised later without invalidating existing hashes). Sessions are random 32-byte

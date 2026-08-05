@@ -11,6 +11,21 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  async redirects() {
+    return [
+      // Blogs used to be served under a `/site` prefix; keep shared links alive.
+      {
+        source: '/site/:subdomain/:path*',
+        destination: '/:subdomain/:path*',
+        permanent: true,
+      },
+      {
+        source: '/site/:subdomain',
+        destination: '/:subdomain',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

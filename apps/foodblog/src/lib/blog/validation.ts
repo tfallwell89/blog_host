@@ -4,7 +4,10 @@ import { BLOG_THEME_VALUES } from './themes';
 
 /**
  * Subdomains that the platform keeps for itself, so a blog can never shadow
- * an operational host once real subdomain routing is switched on.
+ * an operational host once real subdomain routing is switched on. Blogs are
+ * served from `/<subdomain>`, so this list must also cover every top-level
+ * route of the app itself — those win the route match and would otherwise
+ * leave the blog unreachable.
  */
 const RESERVED_SUBDOMAINS = new Set([
   'admin',
@@ -21,6 +24,8 @@ const RESERVED_SUBDOMAINS = new Set([
   'media',
   'onboarding',
   'settings',
+  'sign-in',
+  'sign-up',
   'signin',
   'signup',
   'site',

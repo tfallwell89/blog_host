@@ -10,7 +10,7 @@ Status vocabulary used throughout: **Implemented**, **Partial**, **Planned**, **
 ## 1. Project overview
 
 BlogHost is hosted food-blog software. A cook signs up, creates one blog, writes recipes in a
-visual editor, and publishes them to a public blog served under `/site/<subdomain>`.
+visual editor, and publishes them to a public blog served under `/<subdomain>`.
 
 | Layer      | Technology                                            |
 | ---------- | ----------------------------------------------------- |
@@ -125,7 +125,7 @@ directory. Domain code lives in `apps/foodblog/src/lib`.
 
 | Boundary                       | Where                                                                                                                                              | Next.js allowed?                                                                                             |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Public blog and recipe pages   | `src/app/site/[subdomain]/**`                                                                                                                      | Yes                                                                                                          |
+| Public blog and recipe pages   | `src/app/[subdomain]/**`                                                                                                                           | Yes                                                                                                          |
 | Marketing landing page         | `apps/foodblog/src/app/page.tsx`                                                                                                                   | Yes                                                                                                          |
 | Authenticated dashboard        | `src/app/dashboard/**`                                                                                                                             | Yes                                                                                                          |
 | Recipe editor chrome           | `apps/foodblog/src/components/recipe/recipe-editor.tsx`                                                                                            | Yes (`next/link`, `next/navigation`)                                                                         |
@@ -169,12 +169,12 @@ All routes live under `apps/foodblog/src/app`.
 | `/dashboard/recipes/[recipeId]?saved=…`           | Editor for an existing recipe                                      | Authenticated + owner                                     | `apps/foodblog/src/app/dashboard/recipes/[recipeId]/page.tsx`                                                                                                                  | `getEditableRecipe(recipeId, userId)` — 404 if not owned                                         |
 | `/dashboard/appearance`                           | Theme switching                                                    | Authenticated + blog                                      | `apps/foodblog/src/app/dashboard/appearance/page.tsx`, `apps/foodblog/src/components/blog/appearance-form.tsx`                                                                 | `getThemeOption(blog.theme)`                                                                     |
 | `/dashboard/settings`                             | Blog name, address, description, author; custom-domain placeholder | Authenticated + blog                                      | `apps/foodblog/src/app/dashboard/settings/page.tsx`, `apps/foodblog/src/components/blog/settings-form.tsx`                                                                     | `requireBlog`                                                                                    |
-| `/site/[subdomain]`                               | Public recipe index with client-side title search                  | Public                                                    | `apps/foodblog/src/app/site/[subdomain]/page.tsx`, `apps/foodblog/src/app/site/[subdomain]/layout.tsx`, `apps/foodblog/src/components/site/recipe-index.tsx`                   | `getBlogBySubdomain`, `getPublishedRecipes`                                                      |
-| `/site/[subdomain]/recipes/[slug]`                | Public recipe page + `Recipe` JSON-LD                              | Public                                                    | `apps/foodblog/src/app/site/[subdomain]/recipes/[slug]/page.tsx`, `apps/foodblog/src/components/recipe/recipe-page.tsx`                                                        | `getPublishedRecipeBySlug` — published only                                                      |
-| `/site/[subdomain]/about`                         | Public about page, generated from blog fields                      | Public                                                    | `apps/foodblog/src/app/site/[subdomain]/about/page.tsx`                                                                                                                        | `getBlogBySubdomain`                                                                             |
+| `/[subdomain]`                                    | Public recipe index with client-side title search                  | Public                                                    | `apps/foodblog/src/app/[subdomain]/page.tsx`, `apps/foodblog/src/app/[subdomain]/layout.tsx`, `apps/foodblog/src/components/site/recipe-index.tsx`                             | `getBlogBySubdomain`, `getPublishedRecipes`                                                      |
+| `/[subdomain]/recipes/[slug]`                     | Public recipe page + `Recipe` JSON-LD                              | Public                                                    | `apps/foodblog/src/app/[subdomain]/recipes/[slug]/page.tsx`, `apps/foodblog/src/components/recipe/recipe-page.tsx`                                                             | `getPublishedRecipeBySlug` — published only                                                      |
+| `/[subdomain]/about`                              | Public about page, generated from blog fields                      | Public                                                    | `apps/foodblog/src/app/[subdomain]/about/page.tsx`                                                                                                                             | `getBlogBySubdomain`                                                                             |
 
 Error and empty routes: `apps/foodblog/src/app/error.tsx` (root boundary), `apps/foodblog/src/app/not-found.tsx`,
-`apps/foodblog/src/app/site/[subdomain]/not-found.tsx`.
+`apps/foodblog/src/app/[subdomain]/not-found.tsx`.
 
 **Planned routes** (none exist yet): real subdomain hosts via middleware rewrite, tag/category
 archive pages, a media library, password reset.
@@ -299,7 +299,7 @@ Editor → toFormValues(recipe, status) → saveRecipeAction(values, recipeId?) 
          ├─ fail → { ok:false, fieldErrors } → setFieldErrors → inline errors on the canvas
          └─ pass → createRecipe | replaceRecipe → Prisma $transaction → PostgreSQL
                  → revalidatePath('/dashboard','layout')
-                 → revalidatePath('/site/<subdomain>','layout')
+                 → revalidatePath('/<subdomain>','layout')
                  → { ok:true, recipeId } → router.replace(...) or router.refresh()
 ```
 
@@ -313,8 +313,8 @@ Editor: setPreviewing(true) → <RecipePage mode="preview" recipe={localState}>
 **Rendering a public recipe page**
 
 ```
-GET /site/<subdomain>/recipes/<slug>
-  → site/[subdomain]/layout.tsx: getBlogBySubdomain → themeAttribute → data-theme
+GET /<subdomain>/recipes/<slug>
+  → [subdomain]/layout.tsx: getBlogBySubdomain → themeAttribute → data-theme
   → page.tsx: getPublishedRecipeBySlug(blog.id, slug)   # status: 'PUBLISHED' only
               ├─ null → notFound()
               └─ buildRecipeJsonLd(...) → <script type="application/ld+json">
@@ -389,7 +389,7 @@ document rather than form fields (the editor sends a whole `RecipeDocument`, whi
 | Slug safety                                | Implemented — strict regex, lowercase, reserved-subdomain list for blogs                                                                                                                                                | `apps/foodblog/src/lib/recipes/validation.ts`, `apps/foodblog/src/lib/blog/validation.ts`            |
 | HTML sanitization                          | Not needed — all user text is plain text rendered as React children; `Prose` splits on blank lines only                                                                                                                 | `apps/foodblog/src/components/site/prose.tsx`                                                        |
 | Environment validation                     | Implemented — fails fast at import                                                                                                                                                                                      | `apps/foodblog/src/lib/env.ts`                                                                       |
-| **JSON-LD injection**                      | **Missing safeguard.** `dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}` does not escape `<`, `>` or `/`, so a recipe title containing `</script>` can break out of the script element on a published page | `apps/foodblog/src/app/site/[subdomain]/recipes/[slug]/page.tsx`                                     |
+| **JSON-LD injection**                      | **Missing safeguard.** `dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}` does not escape `<`, `>` or `/`, so a recipe title containing `</script>` can break out of the script element on a published page | `apps/foodblog/src/app/[subdomain]/recipes/[slug]/page.tsx`                                          |
 | **File uploads**                           | **Not implemented.** `featuredImageUrl` accepts any `http(s)` URL; there is no upload endpoint, no size or MIME check, no domain allowlist, and images render through a raw `<img>`                                     | `apps/foodblog/src/lib/recipes/validation.ts`, `apps/foodblog/src/components/recipe/recipe-page.tsx` |
 | **Rate limiting / brute-force protection** | **Missing.** Sign-in and sign-up have no throttling                                                                                                                                                                     | —                                                                                                    |
 | **Email verification, password reset**     | **Missing.** `User.emailVerifiedAt` is an unused seam                                                                                                                                                                   | —                                                                                                    |
@@ -436,10 +436,13 @@ identity is genuinely shared, but the MVP goal of _no user-selectable themes_ is
 Removing them would be a schema change plus a route deletion. Status: **Diverges — decide before
 launch**.
 
-**Tenant routing has exactly one seam.** Public blogs are served from `/site/<subdomain>` and every
+**Tenant routing has exactly one seam.** Public blogs are served from `/<subdomain>` and every
 public URL is produced by `apps/foodblog/src/lib/tenant.ts`. _Why:_ moving to real `<subdomain>.bloghost.app`
 hosts should be a change to those helpers plus a middleware rewrite. _Consequence:_ never
-hand-build a public URL.
+hand-build a public URL. Because blogs sit at the root, the app's own static routes win the route
+match against `[subdomain]`, so every new top-level route must also be added to
+`RESERVED_SUBDOMAINS` in `apps/foodblog/src/lib/blog/validation.ts` or it will silently make a
+blog unreachable.
 
 **Auth is hand-rolled and small.** _Why:_ email + password with a database session is the whole
 requirement; a library would add more surface than it removes. _Consequence:_ everything a library
@@ -491,7 +494,7 @@ affordances only).
 
 ### Add a public page
 
-1. `apps/foodblog/src/app/site/[subdomain]/<name>/page.tsx` — resolve the blog with `getBlogBySubdomain`,
+1. `apps/foodblog/src/app/[subdomain]/<name>/page.tsx` — resolve the blog with `getBlogBySubdomain`,
    `notFound()` when missing, export `generateMetadata` with a canonical from `apps/foodblog/src/lib/tenant.ts`.
 2. Add the link to `apps/foodblog/src/components/site/site-nav.tsx`.
 3. Only query published content.
@@ -552,23 +555,23 @@ dependency as `"workspace:*"`, and add the package name to `transpilePackages` i
 
 ## 12. Known limitations and planned work
 
-| Gap                                                                                 | Status                  | Impact                                                                            |
-| ----------------------------------------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------- |
-| No test tooling at all — no runner, no `test` script, no test files                 | Planned                 | Every change is verified by `typecheck`, `lint` and manual clicking               |
-| Preview is an in-page toggle, not a modal                                           | Planned                 | Diverges from the MVP definition                                                  |
-| Three user-selectable themes rather than one platform-wide theme                    | Diverges                | Requires a product decision, then a schema migration and route removal            |
-| JSON-LD is serialised without escaping `</script>`                                  | Planned (security)      | Breakout risk on published recipe pages — see [§9](#9-security-and-authorization) |
-| No image upload; hero images are external URLs rendered through a raw `<img>`       | Planned                 | No `next/image`, no domain allowlist, no size limits                              |
-| No tags or categories as first-class data                                           | Planned                 | Only the `cuisine` and `course` strings exist                                     |
-| No autosave and no unsaved-changes warning                                          | Planned                 | Navigating away from the editor loses work                                        |
-| Save rewrites the whole ingredient and instruction tree                             | Accepted trade-off      | Child row ids are unstable                                                        |
-| Unpublishing clears `publishedAt`                                                   | Accepted trade-off      | Re-publishing produces a new date                                                 |
-| No email verification, password reset, or rate limiting                             | Planned                 | `User.emailVerifiedAt` is the prepared seam                                       |
-| Expired `Session` rows are never swept                                              | Planned                 | Table grows unbounded                                                             |
-| `BlogRole.EDITOR` unenforced; `userCanEditBlog()` is dead code                      | Planned                 | Multi-author blogs are modelled but not usable                                    |
-| `uniqueSlug()` in `apps/foodblog/src/lib/slug.ts` is unused                         | Debt                    | Slug collisions surface as a user-facing error instead of being resolved          |
-| Subdomain hosting is path-based (`/site/<subdomain>`); no middleware rewrite exists | Planned                 | The seam is `apps/foodblog/src/lib/tenant.ts`                                     |
-| No custom domains, billing, comments, ratings, or newsletters                       | Not planned for the MVP | The Settings page shows a "Coming soon" badge for custom domains                  |
+| Gap                                                                            | Status                  | Impact                                                                            |
+| ------------------------------------------------------------------------------ | ----------------------- | --------------------------------------------------------------------------------- |
+| No test tooling at all — no runner, no `test` script, no test files            | Planned                 | Every change is verified by `typecheck`, `lint` and manual clicking               |
+| Preview is an in-page toggle, not a modal                                      | Planned                 | Diverges from the MVP definition                                                  |
+| Three user-selectable themes rather than one platform-wide theme               | Diverges                | Requires a product decision, then a schema migration and route removal            |
+| JSON-LD is serialised without escaping `</script>`                             | Planned (security)      | Breakout risk on published recipe pages — see [§9](#9-security-and-authorization) |
+| No image upload; hero images are external URLs rendered through a raw `<img>`  | Planned                 | No `next/image`, no domain allowlist, no size limits                              |
+| No tags or categories as first-class data                                      | Planned                 | Only the `cuisine` and `course` strings exist                                     |
+| No autosave and no unsaved-changes warning                                     | Planned                 | Navigating away from the editor loses work                                        |
+| Save rewrites the whole ingredient and instruction tree                        | Accepted trade-off      | Child row ids are unstable                                                        |
+| Unpublishing clears `publishedAt`                                              | Accepted trade-off      | Re-publishing produces a new date                                                 |
+| No email verification, password reset, or rate limiting                        | Planned                 | `User.emailVerifiedAt` is the prepared seam                                       |
+| Expired `Session` rows are never swept                                         | Planned                 | Table grows unbounded                                                             |
+| `BlogRole.EDITOR` unenforced; `userCanEditBlog()` is dead code                 | Planned                 | Multi-author blogs are modelled but not usable                                    |
+| `uniqueSlug()` in `apps/foodblog/src/lib/slug.ts` is unused                    | Debt                    | Slug collisions surface as a user-facing error instead of being resolved          |
+| Subdomain hosting is path-based (`/<subdomain>`); no middleware rewrite exists | Planned                 | The seam is `apps/foodblog/src/lib/tenant.ts`                                     |
+| No custom domains, billing, comments, ratings, or newsletters                  | Not planned for the MVP | The Settings page shows a "Coming soon" badge for custom domains                  |
 
 ---
 

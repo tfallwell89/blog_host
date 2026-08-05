@@ -49,7 +49,7 @@ export interface RecipeByline {
 export interface RecipeEditContext {
   onChange: <K extends keyof RecipeDocument>(field: K, value: RecipeDocument[K]) => void;
   fieldErrors?: FieldErrors;
-  /** Reader-facing prefix of the recipe address, e.g. `/site/kitchen/recipes/`. */
+  /** Reader-facing prefix of the recipe address, e.g. `/kitchen/recipes/`. */
   slugPrefix: string;
 }
 

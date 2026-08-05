@@ -57,7 +57,7 @@ const REASONS = [
 const FALLBACK_PREVIEW = {
   name: "Jane's Kitchen",
   description: 'Unfussy recipes for busy weeknights and slow weekends.',
-  href: `/site/${DEMO_SUBDOMAIN}`,
+  href: blogPath(DEMO_SUBDOMAIN),
   recipes: [
     {
       title: 'Lemon Garlic Butter Chicken',

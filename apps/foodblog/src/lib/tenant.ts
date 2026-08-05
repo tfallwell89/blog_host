@@ -1,20 +1,22 @@
 /**
  * Tenant routing.
  *
- * Hosted blogs currently live under a path prefix (`/site/<subdomain>`) so the
- * whole platform runs from a single origin in development. Every public link
- * is produced here, so switching to real `<subdomain>.bloghost.app` hosts later
- * only means changing these helpers plus a middleware rewrite.
+ * Hosted blogs live at the root of the platform origin (`/<subdomain>`) so the
+ * whole platform runs from a single origin in development while readers still
+ * get a clean address. The app router resolves the platform's own static routes
+ * (`/dashboard`, `/sign-in`, ...) before the `[subdomain]` segment, and
+ * `RESERVED_SUBDOMAINS` in `lib/blog/validation.ts` keeps blogs from claiming
+ * one of those names. Every public link is produced here, so switching to real
+ * `<subdomain>.bloghost.app` hosts later only means changing these helpers plus
+ * a middleware rewrite.
  */
-
-export const TENANT_PATH_PREFIX = '/site';
 
 export function normalizeSubdomain(value: string): string {
   return value.trim().toLowerCase();
 }
 
 export function blogPath(subdomain: string): string {
-  return `${TENANT_PATH_PREFIX}/${normalizeSubdomain(subdomain)}`;
+  return `/${normalizeSubdomain(subdomain)}`;
 }
 
 export function blogRecipePath(subdomain: string, recipeSlug: string): string {

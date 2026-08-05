@@ -355,7 +355,7 @@ async function main(): Promise<void> {
   console.warn(
     [
       'Seed complete.',
-      `  Blog:     ${blog.name} (/site/${blog.subdomain})`,
+      `  Blog:     ${blog.name} (/${blog.subdomain})`,
       `  Recipes:  ${published} published, ${recipes.length - published} draft`,
       `  Sign in:  ${DEMO_EMAIL} / ${DEMO_PASSWORD}`,
     ].join('\n'),

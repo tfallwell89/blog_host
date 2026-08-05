@@ -74,7 +74,7 @@ export function OnboardingForm() {
               required
             />
             <p className="field-preview">
-              Your blog will live at <code>/site/{subdomain || 'your-address'}</code>
+              Your blog will live at <code>bloghost.app/{subdomain || 'your-address'}</code>
             </p>
           </>
         )}
