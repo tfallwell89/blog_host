@@ -67,7 +67,7 @@ Paths are repository-relative. Entries in **Read first** are relative to that ro
 | ------------------ | ---------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------- |
 | App                | `apps/foodblog/`                                           | The only deployable application                            | `package.json`, `next.config.ts`                   |
 | Routes             | `apps/foodblog/src/app/`                                   | App Router tree                                            | `layout.tsx`                                       |
-| Public blog        | `apps/foodblog/src/app/site/[subdomain]/`                  | Hosted blog: index, recipe, about                          | `layout.tsx`                                       |
+| Public blog        | `apps/foodblog/src/app/[subdomain]/`                       | Hosted blog: index, recipe, about                          | `layout.tsx`                                       |
 | Dashboard          | `apps/foodblog/src/app/dashboard/`                         | Authenticated area                                         | `layout.tsx`                                       |
 | Auth routes        | `apps/foodblog/src/app/(auth)/`                            | Sign in, sign up                                           | `sign-in/page.tsx`                                 |
 | Recipe UI          | `apps/foodblog/src/components/recipe/`                     | Document model, canvas, editor shell                       | `recipe-document.ts`                               |
@@ -95,8 +95,8 @@ Paths are repository-relative. Entries in **Read first** are relative to that ro
 | Recipe editor chrome (action bar, save, preview toggle) | `apps/foodblog/src/components/recipe/recipe-editor.tsx`                      | `apps/foodblog/src/styles/editor.css`, `apps/foodblog/src/lib/recipes/actions.ts`                                                                       |
 | Recipe layout / content blocks                          | `apps/foodblog/src/components/recipe/recipe-page.tsx`                        | `apps/foodblog/src/components/recipe/editable.tsx`, `apps/foodblog/src/components/recipe/recipe-document.ts`                                            |
 | Inline editing fields and `+` controls                  | `apps/foodblog/src/components/recipe/editable.tsx`                           | `apps/foodblog/src/styles/editor.css`                                                                                                                   |
-| Published recipe page                                   | `apps/foodblog/src/app/site/[subdomain]/recipes/[slug]/page.tsx`             | `apps/foodblog/src/components/recipe/recipe-page.tsx`, `apps/foodblog/src/styles/site.css`, `apps/foodblog/src/lib/recipes/json-ld.ts`                  |
-| Public recipe index / search                            | `apps/foodblog/src/components/site/recipe-index.tsx`                         | `apps/foodblog/src/app/site/[subdomain]/page.tsx`                                                                                                       |
+| Published recipe page                                   | `apps/foodblog/src/app/[subdomain]/recipes/[slug]/page.tsx`                  | `apps/foodblog/src/components/recipe/recipe-page.tsx`, `apps/foodblog/src/styles/site.css`, `apps/foodblog/src/lib/recipes/json-ld.ts`                  |
+| Public recipe index / search                            | `apps/foodblog/src/components/site/recipe-index.tsx`                         | `apps/foodblog/src/app/[subdomain]/page.tsx`                                                                                                            |
 | Recipe database fields                                  | `apps/foodblog/prisma/schema.prisma`                                         | `apps/foodblog/src/lib/recipes/validation.ts`, `apps/foodblog/src/lib/recipes/persistence.ts`, `apps/foodblog/src/components/recipe/recipe-document.ts` |
 | Recipe reads                                            | `apps/foodblog/src/lib/recipes/queries.ts`                                   | `apps/foodblog/src/lib/db.ts`                                                                                                                           |
 | Recipe writes                                           | `apps/foodblog/src/lib/recipes/persistence.ts`                               | `apps/foodblog/src/lib/recipes/actions.ts`                                                                                                              |
@@ -121,23 +121,23 @@ Paths are repository-relative. Entries in **Read first** are relative to that ro
 
 Use these exact words in code, UI copy and commit messages.
 
-| Term                  | Meaning in this codebase                                                                                                                         |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Blog**              | `Blog` model. One hosted food blog: name, `subdomain`, description, `authorName`, theme. One per account today                                   |
-| **Subdomain**         | The blog's address segment. Served at `/site/<subdomain>`, globally unique, reserved words blocked in `apps/foodblog/src/lib/blog/validation.ts` |
-| **Recipe**            | `Recipe` model plus its ingredient and instruction trees                                                                                         |
-| **Draft**             | `Recipe.status === 'DRAFT'`. Never returned by a public query                                                                                    |
-| **Published recipe**  | `Recipe.status === 'PUBLISHED'` with a `publishedAt` timestamp; readable at `/site/<subdomain>/recipes/<slug>`                                   |
-| **Recipe editor**     | `RecipeEditor` — the client shell around the canvas at `/dashboard/recipes/new` and `/dashboard/recipes/[recipeId]`                              |
-| **Canvas**            | The editable recipe surface: `RecipePage` in `mode="edit"`, styled by `editor.css`                                                               |
-| **Recipe document**   | `RecipeDocument` in `apps/foodblog/src/components/recipe/recipe-document.ts` — the all-strings client-side shape the editor mutates              |
-| **Preview**           | `RecipePage` in `mode="preview"`, showing unsaved local state. An in-page toggle today, not a modal                                              |
-| **Ingredient group**  | `IngredientGroup` — an optionally titled, ordered list of ingredients ("For the sauce")                                                          |
-| **Instruction group** | `InstructionGroup` — an optionally titled, ordered list of steps. The spec's "instruction section"                                               |
-| **Fact**              | An entry in the strip under the hero image (prep, cook, extra, total, serves, course, cuisine, difficulty), declared in `RECIPE_FACTS`           |
-| **Slug**              | `Recipe.slug` — lowercase hyphenated address segment, unique per blog                                                                            |
-| **Owner**             | A `BlogMember` with `role: 'OWNER'`. The only role ever created; `EDITOR` exists in the enum but is unused                                       |
-| **Tenant**            | A blog as addressed by URL. All public URL construction goes through `apps/foodblog/src/lib/tenant.ts`                                           |
+| Term                  | Meaning in this codebase                                                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Blog**              | `Blog` model. One hosted food blog: name, `subdomain`, description, `authorName`, theme. One per account today                              |
+| **Subdomain**         | The blog's address segment. Served at `/<subdomain>`, globally unique, reserved words blocked in `apps/foodblog/src/lib/blog/validation.ts` |
+| **Recipe**            | `Recipe` model plus its ingredient and instruction trees                                                                                    |
+| **Draft**             | `Recipe.status === 'DRAFT'`. Never returned by a public query                                                                               |
+| **Published recipe**  | `Recipe.status === 'PUBLISHED'` with a `publishedAt` timestamp; readable at `/<subdomain>/recipes/<slug>`                                   |
+| **Recipe editor**     | `RecipeEditor` — the client shell around the canvas at `/dashboard/recipes/new` and `/dashboard/recipes/[recipeId]`                         |
+| **Canvas**            | The editable recipe surface: `RecipePage` in `mode="edit"`, styled by `editor.css`                                                          |
+| **Recipe document**   | `RecipeDocument` in `apps/foodblog/src/components/recipe/recipe-document.ts` — the all-strings client-side shape the editor mutates         |
+| **Preview**           | `RecipePage` in `mode="preview"`, showing unsaved local state. An in-page toggle today, not a modal                                         |
+| **Ingredient group**  | `IngredientGroup` — an optionally titled, ordered list of ingredients ("For the sauce")                                                     |
+| **Instruction group** | `InstructionGroup` — an optionally titled, ordered list of steps. The spec's "instruction section"                                          |
+| **Fact**              | An entry in the strip under the hero image (prep, cook, extra, total, serves, course, cuisine, difficulty), declared in `RECIPE_FACTS`      |
+| **Slug**              | `Recipe.slug` — lowercase hyphenated address segment, unique per blog                                                                       |
+| **Owner**             | A `BlogMember` with `role: 'OWNER'`. The only role ever created; `EDITOR` exists in the enum but is unused                                  |
+| **Tenant**            | A blog as addressed by URL. All public URL construction goes through `apps/foodblog/src/lib/tenant.ts`                                      |
 
 ## 7. Dependency direction
 
@@ -196,7 +196,7 @@ Prohibited:
 | Slug changes                  | No redirects exist; changing a slug or subdomain breaks every published link                                                            | `apps/foodblog/src/lib/slug.ts`, `apps/foodblog/src/lib/recipes/validation.ts`, `apps/foodblog/src/lib/tenant.ts`            |
 | Database migrations           | One migration so far; never hand-edit an applied one                                                                                    | `apps/foodblog/prisma/migrations/`                                                                                           |
 | Destructive deletes           | The whole recipe tree cascades; `deleteRecipe` uses `deleteMany` scoped by `blogId`                                                     | `apps/foodblog/prisma/schema.prisma`, `apps/foodblog/src/lib/recipes/persistence.ts`                                         |
-| Rendered HTML                 | Only one `dangerouslySetInnerHTML` in the codebase — the JSON-LD script, which is **not escaped against `</script>`**                   | `apps/foodblog/src/app/site/[subdomain]/recipes/[slug]/page.tsx`, `apps/foodblog/src/lib/recipes/json-ld.ts`                 |
+| Rendered HTML                 | Only one `dangerouslySetInnerHTML` in the codebase — the JSON-LD script, which is **not escaped against `</script>`**                   | `apps/foodblog/src/app/[subdomain]/recipes/[slug]/page.tsx`, `apps/foodblog/src/lib/recipes/json-ld.ts`                      |
 | File uploads                  | Not implemented; hero images are unvalidated external URLs in a raw `<img>`                                                             | `apps/foodblog/src/lib/recipes/validation.ts`, `apps/foodblog/src/components/recipe/recipe-page.tsx`                         |
 | Preview state                 | Renders unsaved local state and must never gain a mutation path                                                                         | `apps/foodblog/src/components/recipe/recipe-editor.tsx`                                                                      |
 | Reordering nested content     | Save deletes and recreates both group trees in one transaction; `position` comes from array index, and child ids change every save      | `apps/foodblog/src/lib/recipes/persistence.ts`, `apps/foodblog/src/components/recipe/recipe-document.ts`                     |
@@ -220,11 +220,11 @@ Prohibited:
 | Drag-and-drop reordering                    | Planned                 | —                                                       | Only ↑ ↓ buttons; the one drop target is the photo URL well                |
 | Hero image                                  | Partial                 | `apps/foodblog/src/lib/recipes/validation.ts`           | External `http(s)` URL only; no upload, no allowlist, raw `<img>`          |
 | Tags / categories                           | Partial                 | `apps/foodblog/prisma/schema.prisma`                    | Free-text `cuisine` and `course`; no model, no archive pages               |
-| Public recipe index and page                | Implemented             | `apps/foodblog/src/app/site/[subdomain]/`               | Title search, print button, about page                                     |
+| Public recipe index and page                | Implemented             | `apps/foodblog/src/app/[subdomain]/`                    | Title search, print button, about page                                     |
 | SEO metadata + `Recipe` JSON-LD             | Implemented             | `apps/foodblog/src/lib/recipes/json-ld.ts`              | Escaping gap noted in [§9](#9-high-risk-areas)                             |
 | Single platform-wide visual system          | Partial                 | `apps/foodblog/src/styles/site.css`                     | Shared markup, but three user-selectable token themes                      |
 | Custom domains                              | Planned                 | `apps/foodblog/src/app/dashboard/settings/page.tsx`     | "Coming soon" badge only                                                   |
-| Real subdomain hosting                      | Planned                 | `apps/foodblog/src/lib/tenant.ts`                       | Path-based `/site/<subdomain>` today; needs a middleware rewrite           |
+| Real subdomain hosting                      | Planned                 | `apps/foodblog/src/lib/tenant.ts`                       | Path-based `/<subdomain>` today; needs a middleware rewrite                |
 | Multi-author blogs                          | Blocked                 | `apps/foodblog/prisma/schema.prisma`                    | `BlogRole.EDITOR` and `userCanEditBlog()` exist but nothing enforces roles |
 | Automated tests                             | Planned                 | —                                                       | No runner, no test files, no `test` script                                 |
 | Billing, comments, ratings, newsletters     | Not planned for the MVP | —                                                       | See `README.md`                                                            |

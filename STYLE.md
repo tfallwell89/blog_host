@@ -355,7 +355,7 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
   with `HowToSection`/`HowToStep` instructions. Only fields the cook filled in are emitted — never
   invent values for rich results.
 - **Print.** `PrintButton` calls `window.print()`; print rules live in `apps/foodblog/src/styles/site.css`.
-- **Stable URLs.** `/site/<subdomain>/recipes/<slug>`. Changing a slug or subdomain breaks every
+- **Stable URLs.** `/<subdomain>/recipes/<slug>`. Changing a slug or subdomain breaks every
   existing link — there are no redirects. Treat a published slug as close to permanent.
 - **Unpublished content is unreachable.** Public queries filter `status: 'PUBLISHED'` and a miss
   is a `notFound()`, indistinguishable from a recipe that never existed.
@@ -447,7 +447,7 @@ list next to any change you make in these areas.
 | Publishing             | Slug conflict returns a field error and writes nothing; `revalidatePath` is called for both trees                                                         | `apps/foodblog/src/lib/recipes/actions.ts`                                                                                           |
 | Editor interactions    | Adding a line focuses it; Enter splits; the last group cannot be removed; the slug stops tracking the title once edited                                   | `src/components/recipe/*`                                                                                                            |
 | Preview                | Preview renders the current unsaved document and exposes no mutation control                                                                              | `recipe-editor.tsx`                                                                                                                  |
-| Public rendering       | Published recipe renders; draft slug 404s; JSON-LD contains only supplied fields                                                                          | `apps/foodblog/src/app/site/[subdomain]/recipes/[slug]/page.tsx`                                                                     |
+| Public rendering       | Published recipe renders; draft slug 404s; JSON-LD contains only supplied fields                                                                          | `apps/foodblog/src/app/[subdomain]/recipes/[slug]/page.tsx`                                                                          |
 | Accessibility-critical | Dialog focus trapping and Escape; error messages associated with their field; icon-only buttons have accessible names                                     | `packages/ui/src/dialog.tsx`, `form-field.tsx`, `editable.tsx`                                                                       |
 
 ---
