@@ -1,0 +1,29 @@
+{
+  "name": "bloghost",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,css,md}\"",
+    "db:generate": "pnpm --filter @bloghost/foodblog db:generate",
+    "db:migrate": "pnpm --filter @bloghost/foodblog db:migrate",
+    "db:deploy": "pnpm --filter @bloghost/foodblog db:deploy",
+    "db:seed": "pnpm --filter @bloghost/foodblog db:seed",
+    "db:reset": "pnpm --filter @bloghost/foodblog db:reset",
+    "db:studio": "pnpm --filter @bloghost/foodblog db:studio"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.9.3"
+  }
+}

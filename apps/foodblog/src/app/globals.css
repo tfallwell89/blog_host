@@ -1,0 +1,160 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: var(--ui-font-sans);
+  color: var(--ui-color-text);
+  background-color: var(--ui-color-bg);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+a {
+  color: var(--ui-color-primary-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ui-color-focus);
+  outline-offset: 2px;
+}
+
+/* Keyboard users get a way past repeated navigation. */
+.skip-link {
+  position: absolute;
+  top: -3rem;
+  left: var(--ui-space-4);
+  z-index: 50;
+  padding: 0.5rem 1rem;
+  color: var(--ui-color-text);
+  background-color: var(--ui-color-surface);
+  border-radius: var(--ui-radius-md);
+  transition: top 120ms ease;
+}
+
+.skip-link:focus {
+  top: var(--ui-space-2);
+}
+
+/* --------------------------------------------------------------- Utilities */
+
+.page {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 var(--ui-space-5);
+}
+
+.page--narrow {
+  max-width: 44rem;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+}
+
+.stack--lg {
+  gap: var(--ui-space-6);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3);
+  align-items: center;
+}
+
+.muted {
+  color: var(--ui-color-text-muted);
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+/* ------------------------------------------------------------------ Alerts */
+
+.alert {
+  padding: var(--ui-space-3) var(--ui-space-4);
+  font-size: 0.9375rem;
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-md);
+}
+
+.alert--error {
+  color: var(--ui-color-danger);
+  background-color: var(--ui-color-danger-soft);
+  border-color: color-mix(in srgb, var(--ui-color-danger) 25%, transparent);
+}
+
+.alert--success {
+  color: var(--ui-color-success);
+  background-color: var(--ui-color-success-soft);
+  border-color: color-mix(in srgb, var(--ui-color-success) 30%, transparent);
+}
+
+.alert--info {
+  color: var(--ui-color-text-muted);
+  background-color: var(--ui-color-surface-muted);
+  border-color: var(--ui-color-border);
+}
+
+/* -------------------------------------------------------------- Auth pages */
+
+.auth {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-5);
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--ui-space-6) var(--ui-space-4);
+}
+
+.auth__brand {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--ui-color-text);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.auth__card {
+  width: 100%;
+  max-width: 26rem;
+}
+
+.auth__intro {
+  margin: 0 0 var(--ui-space-5);
+  font-size: 0.9375rem;
+  color: var(--ui-color-text-muted);
+}
+
+.auth__footer {
+  font-size: 0.9375rem;
+  color: var(--ui-color-text-muted);
+  text-align: center;
+}

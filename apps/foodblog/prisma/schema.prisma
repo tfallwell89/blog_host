@@ -1,0 +1,182 @@
+// Prisma schema for the hosted food-blog platform.
+//
+// Multi-tenancy is modelled at the Blog level: every piece of published
+// content hangs off a Blog, and access is granted through BlogMember.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BlogTheme {
+  MINIMAL
+  EDITORIAL
+  WARM
+}
+
+enum BlogRole {
+  OWNER
+  EDITOR
+}
+
+enum RecipeStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum RecipeDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  displayName  String
+  // Seam for the email-verification flow; null means "not verified yet".
+  emailVerifiedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions    Session[]
+  memberships BlogMember[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  // Only the SHA-256 hash of the session token is stored.
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Blog {
+  id          String    @id @default(cuid())
+  name        String
+  subdomain   String    @unique
+  description String
+  authorName  String
+  theme       BlogTheme @default(MINIMAL)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  members BlogMember[]
+  recipes Recipe[]
+
+  @@map("blogs")
+}
+
+/// Join table between users and blogs. A user may hold membership in several
+/// blogs even though the MVP onboarding only creates one.
+model BlogMember {
+  id        String   @id @default(cuid())
+  blogId    String
+  userId    String
+  role      BlogRole @default(OWNER)
+  createdAt DateTime @default(now())
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([blogId, userId])
+  @@index([userId])
+  @@map("blog_members")
+}
+
+model Recipe {
+  id                String            @id @default(cuid())
+  blogId            String
+  title             String
+  slug              String
+  description       String
+  introduction      String?
+  featuredImageUrl  String?
+  prepMinutes       Int?
+  cookMinutes       Int?
+  additionalMinutes Int?
+  servings          Int?
+  cuisine           String?
+  course            String?
+  difficulty        RecipeDifficulty?
+  notes             String?
+  status            RecipeStatus      @default(DRAFT)
+  publishedAt       DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  blog              Blog               @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  ingredientGroups  IngredientGroup[]
+  instructionGroups InstructionGroup[]
+
+  @@unique([blogId, slug])
+  @@index([blogId, status, publishedAt])
+  @@index([blogId, updatedAt])
+  @@map("recipes")
+}
+
+/// A titled section of ingredients, e.g. "For the chicken".
+model IngredientGroup {
+  id       String  @id @default(cuid())
+  recipeId String
+  title    String?
+  position Int
+
+  recipe      Recipe       @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredients Ingredient[]
+
+  @@index([recipeId, position])
+  @@map("ingredient_groups")
+}
+
+model Ingredient {
+  id       String @id @default(cuid())
+  groupId  String
+  text     String
+  position Int
+
+  group IngredientGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, position])
+  @@map("ingredients")
+}
+
+/// A titled section of instructions, e.g. "Prepare the chicken".
+model InstructionGroup {
+  id       String  @id @default(cuid())
+  recipeId String
+  title    String?
+  position Int
+
+  recipe Recipe            @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  steps  InstructionStep[]
+
+  @@index([recipeId, position])
+  @@map("instruction_groups")
+}
+
+model InstructionStep {
+  id       String @id @default(cuid())
+  groupId  String
+  text     String
+  position Int
+
+  group InstructionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, position])
+  @@map("instruction_steps")
+}
