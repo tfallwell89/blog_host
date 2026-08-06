@@ -70,7 +70,7 @@ export function RecipePage(props: RecipePageProps) {
   const edit = props.mode === 'edit' ? props.edit : null;
 
   return (
-    <article className={cn('recipe', 'site-container--narrow', edit && 'recipe--editing')}>
+    <article className={cn('recipe', edit && 'recipe--editing')}>
       {edit ? null : (
         <Link className="recipe__back" href={indexHref}>
           ← All recipes
@@ -82,44 +82,47 @@ export function RecipePage(props: RecipePageProps) {
       <RecipeFacts recipe={recipe} edit={edit} />
       <RecipeIntroduction recipe={recipe} edit={edit} />
 
-      <RecipeGroups
-        recipe={recipe}
-        edit={edit}
-        field="ingredientGroups"
-        itemsKey="ingredients"
-        heading="Ingredients"
-        headingId="ingredients-heading"
-        labels={{
-          groupTitle: 'Ingredient group name',
-          groupTitlePlaceholder: 'For the sauce',
-          item: 'Ingredient',
-          itemPlaceholder: '200g plain flour',
-          addItem: 'Add ingredient',
-          addGroup: 'Add ingredient group',
-          removeGroup: 'Remove ingredient group',
-          removeItem: 'Remove ingredient',
-        }}
-      />
+      {/* The two lists a cook reads together, side by side on a wide screen. */}
+      <div className="recipe__content">
+        <RecipeGroups
+          recipe={recipe}
+          edit={edit}
+          field="ingredientGroups"
+          itemsKey="ingredients"
+          heading="Ingredients"
+          headingId="ingredients-heading"
+          labels={{
+            groupTitle: 'Ingredient group name',
+            groupTitlePlaceholder: 'For the sauce',
+            item: 'Ingredient',
+            itemPlaceholder: '200g plain flour',
+            addItem: 'Add ingredient',
+            addGroup: 'Add ingredient group',
+            removeGroup: 'Remove ingredient group',
+            removeItem: 'Remove ingredient',
+          }}
+        />
 
-      <RecipeGroups
-        recipe={recipe}
-        edit={edit}
-        field="instructionGroups"
-        itemsKey="steps"
-        ordered
-        heading="Instructions"
-        headingId="instructions-heading"
-        labels={{
-          groupTitle: 'Instruction group name',
-          groupTitlePlaceholder: 'Prepare the chicken',
-          item: 'Step',
-          itemPlaceholder: 'Pat the chicken thighs completely dry and season all over.',
-          addItem: 'Add step',
-          addGroup: 'Add instruction group',
-          removeGroup: 'Remove instruction group',
-          removeItem: 'Remove step',
-        }}
-      />
+        <RecipeGroups
+          recipe={recipe}
+          edit={edit}
+          field="instructionGroups"
+          itemsKey="steps"
+          ordered
+          heading="Instructions"
+          headingId="instructions-heading"
+          labels={{
+            groupTitle: 'Instruction group name',
+            groupTitlePlaceholder: 'Prepare the chicken',
+            item: 'Step',
+            itemPlaceholder: 'Pat the chicken thighs completely dry and season all over.',
+            addItem: 'Add step',
+            addGroup: 'Add instruction group',
+            removeGroup: 'Remove instruction group',
+            removeItem: 'Remove step',
+          }}
+        />
+      </div>
 
       <RecipeNotes recipe={recipe} edit={edit} />
 
