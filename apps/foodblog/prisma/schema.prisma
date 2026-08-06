@@ -74,6 +74,7 @@ model Blog {
 
   members BlogMember[]
   recipes Recipe[]
+  groups  Group[]
 
   @@map("blogs")
 }
@@ -119,11 +120,50 @@ model Recipe {
   blog              Blog               @relation(fields: [blogId], references: [id], onDelete: Cascade)
   ingredientGroups  IngredientGroup[]
   instructionGroups InstructionGroup[]
+  groups            GroupedRecipe[]
 
   @@unique([blogId, slug])
   @@index([blogId, status, publishedAt])
   @@index([blogId, updatedAt])
   @@map("recipes")
+}
+
+/// A named set of related recipes owned by one blog, e.g. "Weeknight dinners".
+/// This is the grouping a cook puts whole recipes into, and it is what the
+/// "More in this group" section on a published recipe reads from. Not to be
+/// confused with IngredientGroup and InstructionGroup, which are sections
+/// inside a single recipe.
+model Group {
+  id        String   @id @default(cuid())
+  blogId    String
+  name      String
+  /// Derived from the name, unique per blog, so re-typing a name joins the
+  /// existing group instead of creating a near-duplicate.
+  slug      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  blog    Blog            @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  recipes GroupedRecipe[]
+
+  @@unique([blogId, slug])
+  @@index([blogId, name])
+  @@map("groups")
+}
+
+/// Join table between recipes and groups. A recipe may sit in several groups.
+model GroupedRecipe {
+  id        String   @id @default(cuid())
+  groupId   String
+  recipeId  String
+  createdAt DateTime @default(now())
+
+  group  Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, recipeId])
+  @@index([recipeId])
+  @@map("grouped_recipes")
 }
 
 /// A titled section of ingredients, e.g. "For the chicken".

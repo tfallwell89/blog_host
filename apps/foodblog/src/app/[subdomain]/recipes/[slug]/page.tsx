@@ -5,7 +5,7 @@ import { toRecipeDocument } from '@/components/recipe/recipe-document';
 import { RecipePage } from '@/components/recipe/recipe-page';
 import { getBlogBySubdomain } from '@/lib/blog/queries';
 import { buildRecipeJsonLd } from '@/lib/recipes/json-ld';
-import { getPublishedRecipeBySlug } from '@/lib/recipes/queries';
+import { getPublishedRecipeBySlug, getRelatedPublishedRecipes } from '@/lib/recipes/queries';
 import { blogPath, blogRecipePath, blogRecipeUrl } from '@/lib/tenant';
 
 interface RecipeParams {
@@ -53,6 +53,9 @@ export default async function PublicRecipePage({ params }: RecipeParams) {
     notFound();
   }
 
+  // The other published recipes in this recipe's groups, one entry per group.
+  const related = await getRelatedPublishedRecipes(blog.id, recipe.id);
+
   const jsonLd = buildRecipeJsonLd({
     recipe,
     authorName: blog.authorName,
@@ -77,6 +80,16 @@ export default async function PublicRecipePage({ params }: RecipeParams) {
           publishedAt: recipe.publishedAt?.toISOString() ?? null,
         }}
         indexHref={blogPath(blog.subdomain)}
+        related={related.map((group) => ({
+          name: group.name,
+          recipes: group.recipes.map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            imageUrl: item.featuredImageUrl,
+            href: blogRecipePath(blog.subdomain, item.slug),
+          })),
+        }))}
       />
     </>
   );

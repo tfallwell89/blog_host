@@ -143,6 +143,7 @@ strings from a key.
 | `recipe-page.tsx`    | The recipe layout for all three modes                                                                        |
 | `editable.tsx`       | Inline field primitives (`EditableText`, `EditableSelect`, `CanvasControl`, `CanvasAddButton`, `focusField`) |
 | `recipe-editor.tsx`  | The client shell: action bar, save state, mode toggle                                                        |
+| `group-panel.tsx`    | The rail beside the canvas: which groups this recipe is in, and what those groups hold                       |
 
 **The published recipe display is reused, not copied.** The public route, the preview and the
 editing canvas all render `RecipePage`. If you find yourself writing a second recipe layout, stop
@@ -315,6 +316,11 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
 - **Keep administrative controls secondary.** The action bar is `sticky` with a translucent
   background; Back is a `ghost` link, status is a `Badge`, and the only prominent control is the
   primary publish button.
+- **Keep the rail for relationships between recipes only.** The group panel
+  (`group-panel.tsx`) is the single thing allowed beside the canvas, because a group is a link
+  between recipes and has no position inside one recipe's reading layout. It is chrome: platform
+  `--ui-*` tokens, the sans stack, hidden in preview, stacked under the canvas below `64rem`.
+  Anything that is part of the recipe is edited in place on the canvas, never in the rail.
 - **Provide clear Preview and Publish.** Labels change with state: `Save draft` / `Unpublish`,
   `Preview` / `Back to editing`, `Publish recipe` / `Update recipe`.
 - **Reveal move and delete controls only when relevant.** `.canvas-controls` are `opacity: 0` until
@@ -329,7 +335,8 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
 ### The editor must not
 
 - Look like a CRM record page, or present the recipe as one long stack of labelled form fields.
-- Use a settings sidebar as the primary editing surface.
+- Use a settings sidebar as the primary editing surface. The group rail is not one: it holds no
+  recipe content and no appearance or publication control.
 - Require the user to learn "blocks" before typing.
 - Expose design or appearance controls (those live at `/dashboard/appearance`).
 - Show database ids, positions, or status enum values. The only technical string a user sees is the
@@ -355,6 +362,10 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
   `<ol class="step-list">`. Facts use a `<dl>`, so each label/value pair is machine-readable.
 - **Sections collapse when empty.** A missing image, introduction, note or fact renders nothing —
   never a placeholder or an em dash on the public page.
+- **Related recipes come last.** After the notes, one `More in <group>` section per group that has
+  other published recipes, capped at `RELATED_RECIPES_PER_GROUP` and using the same `.recipe-card`
+  markup as the index rather than a second card design. A group with nothing else published in it
+  renders nothing, and print hides the section.
 - **Images.** Hero image is a plain `<img>` with `decoding="async"` and `alt={recipe.title}`; index
   cards use `loading="lazy"` and `alt=""` because the adjacent link carries the name.
 - **Metadata.** Every public route exports `generateMetadata` with a title, description, and a
@@ -417,13 +428,14 @@ Concrete requirements, most already met in the code:
 Direct, calm, ordinary. Sentence case everywhere except proper nouns. Address the user as "you",
 and describe their blog as "your food blog".
 
-| Prefer                                                                  | Avoid                                            |
-| ----------------------------------------------------------------------- | ------------------------------------------------ |
-| `Add ingredient`, `Add step`, `Add ingredient group`                    | `Add item`, `New block`, `Insert element`        |
-| `Preview`, `Publish recipe`, `Update recipe`, `Save draft`, `Unpublish` | `Commit`, `Go live`, `Deploy`, `Submit`          |
-| `Recipe title`, `Short description`, `Web address of this recipe`       | `Name field`, `Slug`, `Meta description`, `URI`  |
-| `Draft saved. Only you can see it.`                                     | `Operation completed successfully.`              |
-| `You already have a recipe at that address. Try a different one.`       | `Unique constraint violation on (blogId, slug).` |
+| Prefer                                                                  | Avoid                                                      |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `Add ingredient`, `Add step`, `Add ingredient group`                    | `Add item`, `New block`, `Insert element`                  |
+| `Groups`, `Add to a group`, `More in Weeknight dinners`                 | `Tags`, `Taxonomy`, `Related content`, `You may also like` |
+| `Preview`, `Publish recipe`, `Update recipe`, `Save draft`, `Unpublish` | `Commit`, `Go live`, `Deploy`, `Submit`                    |
+| `Recipe title`, `Short description`, `Web address of this recipe`       | `Name field`, `Slug`, `Meta description`, `URI`            |
+| `Draft saved. Only you can see it.`                                     | `Operation completed successfully.`                        |
+| `You already have a recipe at that address. Try a different one.`       | `Unique constraint violation on (blogId, slug).`           |
 
 - Buttons are verbs. Pending labels are the verb in progress: `Saving…`, `Publishing…`,
   `Working…` (with a real ellipsis character).
@@ -455,6 +467,7 @@ list next to any change you make in these areas.
 | Database queries       | Ordering by `position`, draft exclusion in `getPublishedRecipes*`, `getBlogRecipeStats` counts                                                            | `apps/foodblog/src/lib/*/queries.ts`                                                                                                 |
 | Recipe lifecycle       | Create → save → publish → unpublish → republish, asserting `status`, `publishedAt` and the rebuilt group tree                                             | `apps/foodblog/src/lib/recipes/actions.ts`, `persistence.ts`                                                                         |
 | Publishing             | Slug conflict returns a field error and writes nothing; `revalidatePath` is called for both trees                                                         | `apps/foodblog/src/lib/recipes/actions.ts`                                                                                           |
+| Recipe groups          | Names differing only in case resolve to one group; membership is rebuilt on save; a group left empty is pruned; related reads hide drafts                 | `apps/foodblog/src/lib/recipes/persistence.ts`, `queries.ts`, `apps/foodblog/src/components/recipe/recipe-document.ts`               |
 | Editor interactions    | Adding a line focuses it; Enter splits; the last group cannot be removed; the slug stops tracking the title once edited                                   | `src/components/recipe/*`                                                                                                            |
 | Preview                | Preview renders the current unsaved document and exposes no mutation control                                                                              | `recipe-editor.tsx`                                                                                                                  |
 | Public rendering       | Published recipe renders; draft slug 404s; JSON-LD contains only supplied fields                                                                          | `apps/foodblog/src/app/[subdomain]/recipes/[slug]/page.tsx`                                                                          |

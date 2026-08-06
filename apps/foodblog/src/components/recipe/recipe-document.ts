@@ -1,5 +1,6 @@
 import { DIFFICULTY_LABELS, formatMinutes, totalMinutes } from '@/lib/recipes/format';
-import type { RecipeFormValues } from '@/lib/recipes/validation';
+import { GROUP_NAME_MAX, type RecipeFormValues } from '@/lib/recipes/validation';
+import { slugify } from '@/lib/slug';
 
 /**
  * The recipe document.
@@ -25,6 +26,11 @@ export interface RecipeDocument {
   notes: string;
   ingredientGroups: RecipeGroup[];
   instructionGroups: RecipeGroup[];
+  /**
+   * Names of the groups this recipe is in. Names rather than ids, because a
+   * cook can type a group that does not exist yet and the server creates it.
+   */
+  groups: string[];
 }
 
 /**
@@ -97,6 +103,30 @@ export function moveBy<T>(items: T[], index: number, offset: number): T[] {
 
   next.splice(target, 0, moved);
   return next;
+}
+
+/* Group names ------------------------------------------------------------- */
+
+/**
+ * Two names mean the same group when they slugify the same way — the rule the
+ * server uses when it turns names into rows, applied here so the editor never
+ * shows a recipe joining one group twice.
+ */
+export function groupNameKey(name: string): string {
+  return slugify(name, GROUP_NAME_MAX);
+}
+
+export function withGroupName(names: string[], name: string): string[] {
+  const trimmed = name.trim();
+  const key = groupNameKey(trimmed);
+  if (key === '' || names.some((current) => groupNameKey(current) === key)) return names;
+
+  return [...names, trimmed];
+}
+
+export function withoutGroupName(names: string[], name: string): string[] {
+  const key = groupNameKey(name);
+  return names.filter((current) => groupNameKey(current) !== key);
 }
 
 /* Recipe facts ------------------------------------------------------------ */
@@ -226,6 +256,7 @@ export function toFormValues(
       title: group.title,
       steps: group.items,
     })),
+    groups: recipe.groups,
   };
 }
 
@@ -249,6 +280,7 @@ export interface StoredRecipe {
   notes: string | null;
   ingredientGroups: { title: string | null; ingredients: { text: string }[] }[];
   instructionGroups: { title: string | null; steps: { text: string }[] }[];
+  groups: { group: { name: string } }[];
 }
 
 function toGroups(groups: { title: string | null; items: { text: string }[] }[]): RecipeGroup[] {
@@ -289,6 +321,7 @@ export function toRecipeDocument(recipe: StoredRecipe): RecipeDocument {
     instructionGroups: toGroups(
       recipe.instructionGroups.map((group) => ({ title: group.title, items: group.steps })),
     ),
+    groups: recipe.groups.map((entry) => entry.group.name),
   };
 }
 
@@ -309,5 +342,6 @@ export function emptyRecipeDocument(): RecipeDocument {
     notes: '',
     ingredientGroups: [emptyGroup()],
     instructionGroups: [emptyGroup()],
+    groups: [],
   };
 }

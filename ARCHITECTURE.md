@@ -33,6 +33,7 @@ visual editor, and publishes them to a public blog served under `/<subdomain>`.
 | Publish makes the recipe publicly readable             | Implemented |                                                                                                                               |
 | One platform-wide visual system, no selectable themes  | Implemented | One design for every blog; an owner controls a logo and a brand colour only. See [§10](#10-important-architectural-decisions) |
 | Recipe metadata and structured data on public pages    | Implemented | `generateMetadata` + `Recipe` JSON-LD                                                                                         |
+| Grouping recipes, with related recipes for readers     | Implemented | `Group` + `GroupedRecipe`; edited in the editor's group panel, read as "More in …" on a published recipe                      |
 
 ### Recipe content model
 
@@ -50,6 +51,7 @@ visual editor, and publishes them to a public blog served under `/<subdomain>`.
 | Instruction steps        | `InstructionStep`                                                      | Implemented                                       |
 | Instruction sections     | `InstructionGroup`                                                     | Implemented                                       |
 | Notes                    | `Recipe.notes` (single plain-text field)                               | Implemented                                       |
+| Groups of recipes        | `Group` + the `GroupedRecipe` join                                     | Implemented — no group archive pages yet          |
 | Tags / categories        | `Recipe.cuisine`, `Recipe.course` free-text strings                    | Partial — no `Tag`/`Category` model, no tag pages |
 | Difficulty               | `Recipe.difficulty` enum                                               | Implemented                                       |
 | Publication status       | `Recipe.status`, `Recipe.publishedAt`                                  | Implemented                                       |
@@ -83,7 +85,7 @@ bloghost/
 │           │   ├── auth/            # sign-in / sign-up forms
 │           │   ├── blog/            # onboarding, settings, appearance, brand colour picker
 │           │   ├── dashboard/       # nav, recipe row, delete button, sign out
-│           │   ├── recipe/          # the recipe document, canvas and editor
+│           │   ├── recipe/          # the recipe document, canvas, editor and group panel
 │           │   └── site/            # public blog nav, index, prose, print
 │           ├── lib/
 │           │   ├── auth/            # password, session, service, guards, actions
@@ -130,6 +132,7 @@ directory. Domain code lives in `apps/foodblog/src/lib`.
 | Authenticated dashboard        | `src/app/dashboard/**`                                                                                                                             | Yes                                                                                                          |
 | Recipe editor chrome           | `apps/foodblog/src/components/recipe/recipe-editor.tsx`                                                                                            | Yes (`next/link`, `next/navigation`)                                                                         |
 | Recipe canvas / published page | `apps/foodblog/src/components/recipe/recipe-page.tsx`                                                                                              | Yes (`next/link` only)                                                                                       |
+| Recipe group panel (the rail)  | `apps/foodblog/src/components/recipe/group-panel.tsx`                                                                                              | Yes (`next/link`)                                                                                            |
 | Inline editing primitives      | `apps/foodblog/src/components/recipe/editable.tsx`                                                                                                 | No — plain React and DOM                                                                                     |
 | Recipe document model          | `apps/foodblog/src/components/recipe/recipe-document.ts`                                                                                           | No — pure data, no Prisma, no Next.js                                                                        |
 | Preview                        | Mode of `RecipePage`, toggled in `recipe-editor.tsx`                                                                                               | Yes                                                                                                          |
@@ -194,27 +197,37 @@ useful. Every foreign key in the recipe tree is `onDelete: Cascade`.
 
 ```
 User ──< BlogMember >── Blog ──< Recipe ──< IngredientGroup ──< Ingredient
- │                                    └──< InstructionGroup ──< InstructionStep
+ │                       │            └──< InstructionGroup ──< InstructionStep
+ │                       └──< Group
  └──< Session
+
+Recipe >──< Group        # many-to-many, through GroupedRecipe
 ```
 
-| Model              | Purpose                                        | Key fields                                                                | Relationships                                     | Ownership / lifecycle                                             | Constraints                                                                                | Delete behaviour                                                |
-| ------------------ | ---------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| `User`             | An account                                     | `email`, `passwordHash`, `displayName`, `emailVerifiedAt`                 | `sessions`, `memberships`                         | —                                                                 | `email` unique                                                                             | Deleting cascades sessions and memberships                      |
-| `Session`          | Server-side session                            | `tokenHash` (SHA-256 of the cookie value), `expiresAt`                    | → `User`                                          | Expiry checked on read in `apps/foodblog/src/lib/auth/session.ts` | `tokenHash` unique; indexed on `userId`, `expiresAt`                                       | Cascades from `User`. **No background cleanup of expired rows** |
-| `Blog`             | One hosted food blog                           | `name`, `subdomain`, `description`, `authorName`, `logoUrl`, `brandColor` | `members`, `recipes`                              | Access via `BlogMember`                                           | `subdomain` unique globally                                                                | Cascades members and recipes                                    |
-| `BlogMember`       | User ↔ blog join with a role                   | `role` (`OWNER` \| `EDITOR`)                                              | → `User`, → `Blog`                                | The only ownership record                                         | `@@unique([blogId, userId])`                                                               | Cascades from either side                                       |
-| `Recipe`           | A recipe                                       | See [§1](#recipe-content-model)                                           | → `Blog`, `ingredientGroups`, `instructionGroups` | Owned via `blogId`                                                | `@@unique([blogId, slug])`; indexes `[blogId, status, publishedAt]`, `[blogId, updatedAt]` | Cascades both group trees                                       |
-| `IngredientGroup`  | Titled ingredient section; `title` may be null | `title`, `position`                                                       | → `Recipe`, `ingredients`                         | Via recipe                                                        | Index `[recipeId, position]`                                                               | Cascades ingredients                                            |
-| `Ingredient`       | One ingredient line                            | `text`, `position`                                                        | → `IngredientGroup`                               | Via group                                                         | Index `[groupId, position]`                                                                | —                                                               |
-| `InstructionGroup` | Titled instruction section                     | `title`, `position`                                                       | → `Recipe`, `steps`                               | Via recipe                                                        | Index `[recipeId, position]`                                                               | Cascades steps                                                  |
-| `InstructionStep`  | One numbered step                              | `text`, `position`                                                        | → `InstructionGroup`                              | Via group                                                         | Index `[groupId, position]`                                                                | —                                                               |
+| Model              | Purpose                                        | Key fields                                                                | Relationships                                               | Ownership / lifecycle                                             | Constraints                                                                                | Delete behaviour                                                |
+| ------------------ | ---------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| `User`             | An account                                     | `email`, `passwordHash`, `displayName`, `emailVerifiedAt`                 | `sessions`, `memberships`                                   | —                                                                 | `email` unique                                                                             | Deleting cascades sessions and memberships                      |
+| `Session`          | Server-side session                            | `tokenHash` (SHA-256 of the cookie value), `expiresAt`                    | → `User`                                                    | Expiry checked on read in `apps/foodblog/src/lib/auth/session.ts` | `tokenHash` unique; indexed on `userId`, `expiresAt`                                       | Cascades from `User`. **No background cleanup of expired rows** |
+| `Blog`             | One hosted food blog                           | `name`, `subdomain`, `description`, `authorName`, `logoUrl`, `brandColor` | `members`, `recipes`, `groups`                              | Access via `BlogMember`                                           | `subdomain` unique globally                                                                | Cascades members, recipes and groups                            |
+| `BlogMember`       | User ↔ blog join with a role                   | `role` (`OWNER` \| `EDITOR`)                                              | → `User`, → `Blog`                                          | The only ownership record                                         | `@@unique([blogId, userId])`                                                               | Cascades from either side                                       |
+| `Recipe`           | A recipe                                       | See [§1](#recipe-content-model)                                           | → `Blog`, `ingredientGroups`, `instructionGroups`, `groups` | Owned via `blogId`                                                | `@@unique([blogId, slug])`; indexes `[blogId, status, publishedAt]`, `[blogId, updatedAt]` | Cascades both group trees and its group memberships             |
+| `IngredientGroup`  | Titled ingredient section; `title` may be null | `title`, `position`                                                       | → `Recipe`, `ingredients`                                   | Via recipe                                                        | Index `[recipeId, position]`                                                               | Cascades ingredients                                            |
+| `Ingredient`       | One ingredient line                            | `text`, `position`                                                        | → `IngredientGroup`                                         | Via group                                                         | Index `[groupId, position]`                                                                | —                                                               |
+| `InstructionGroup` | Titled instruction section                     | `title`, `position`                                                       | → `Recipe`, `steps`                                         | Via recipe                                                        | Index `[recipeId, position]`                                                               | Cascades steps                                                  |
+| `InstructionStep`  | One numbered step                              | `text`, `position`                                                        | → `InstructionGroup`                                        | Via group                                                         | Index `[groupId, position]`                                                                | —                                                               |
+| `Group`            | A named set of related recipes                 | `name`, `slug`                                                            | → `Blog`, `recipes`                                         | Owned via `blogId`; created on demand by a save                   | `@@unique([blogId, slug])`; index `[blogId, name]`                                         | Cascades its join rows; pruned when it holds no recipes         |
+| `GroupedRecipe`    | Recipe ↔ group join                            | `createdAt`                                                               | → `Group`, → `Recipe`                                       | Via recipe, rebuilt on every save                                 | `@@unique([groupId, recipeId])`; index `[recipeId]`                                        | Cascades from either side                                       |
 
 Enums: `BlogRole` (`OWNER`, `EDITOR`), `RecipeStatus` (`DRAFT`, `PUBLISHED`),
 `RecipeDifficulty` (`EASY`, `MEDIUM`, `HARD`).
 
 Ordering is stored explicitly in `position`, assigned from array index at write time, and every
 read orders by it. There is no ordering guarantee without an explicit `orderBy`.
+
+**Groups have no admin surface of their own.** They exist only as the names typed into the editor's
+group panel: a save creates the ones that are missing, matching on the slug of the name so
+"Weeknight Dinners" joins "Weeknight dinners" instead of sitting beside it, and a group left with no
+recipes is deleted. There is no group list page and no group route.
 
 **Not modelled yet:** `Category` / `Tag` (only the `cuisine` and `course` strings exist), `Media`
 (only `Recipe.featuredImageUrl`), comments, ratings, and anything billing-related.
@@ -234,17 +247,20 @@ lives in `useState` inside `RecipeEditor` until a button is pressed. Navigating 
 | ----------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Create a draft | Open `/dashboard/recipes/new`                        | `emptyRecipeDocument()` gives one empty ingredient group and one empty instruction group. Nothing is written yet                                          |
 | 2. Edit           | Typing on the canvas                                 | `handleChange` updates local `RecipeDocument`. While the slug has not been hand-edited, it tracks the title through `slugify(value, 80)`                  |
+| 2b. Group it      | Typing a name in the group panel beside the canvas   | Also just `handleChange`, on `RecipeDocument.groups`. Nothing is written until a save, and a group that does not exist yet is created by that save        |
 | 3. Save           | `Save draft`                                         | `saveRecipeAction(toFormValues(recipe, 'DRAFT'), recipeId?)`. On first save the editor `router.replace`s to `/dashboard/recipes/<id>?saved=draft-created` |
 | 4. Preview        | `Preview`                                            | Local `previewing` flag swaps the canvas to `<RecipePage mode="preview">`. No network call, no modal, no mutation path                                    |
 | 5. Publish        | `Publish recipe`                                     | Same action with `status: 'PUBLISHED'`; `publishedAt` set to `now()` if it was null                                                                       |
 | 6. Edit published | Typing, then `Update recipe`                         | Same replace path; the original `publishedAt` is preserved                                                                                                |
 | 7. Unpublish      | `Unpublish` (the `Save draft` button when published) | Saves with `status: 'DRAFT'`, which sets `publishedAt = null`. Re-publishing later produces a **new** publication date                                    |
-| 8. Delete         | `Delete` in the recipe list → `ConfirmDialog`        | `deleteRecipeAction` → `prisma.recipe.deleteMany({ where: { id, blogId } })`, cascading the whole tree                                                    |
+| 8. Delete         | `Delete` in the recipe list → `ConfirmDialog`        | `deleteRecipeAction` → `prisma.recipe.deleteMany({ where: { id, blogId } })`, cascading the whole tree, then pruning groups left empty                    |
 
-**Save is a full replace.** `replaceRecipe` runs one `$transaction` that deletes every
-`IngredientGroup` and `InstructionGroup` for the recipe and recreates them from the submitted
-document. Consequence: ingredient and step row ids change on every save, so nothing may reference
-them.
+**Save is a full replace.** `replaceRecipe` runs one interactive `$transaction` that resolves the
+submitted group names to `Group` rows, deletes every `IngredientGroup`, `InstructionGroup` and
+`GroupedRecipe` for the recipe, recreates them from the submitted document, and prunes any group
+the recipe just left empty. Consequence: ingredient, step and group-membership row ids change on
+every save, so nothing may reference them. `Group` rows themselves are stable — they are matched by
+slug, not recreated.
 
 **Draft vs published** is `Recipe.status` plus `Recipe.publishedAt`. Draft recipes are excluded at
 the query level, not by a filter in the view: `getPublishedRecipes` and `getPublishedRecipeBySlug`
@@ -317,8 +333,9 @@ GET /<subdomain>/recipes/<slug>
   → [subdomain]/layout.tsx: getBlogBySubdomain → brandColorStyle → --site-accent
   → page.tsx: getPublishedRecipeBySlug(blog.id, slug)   # status: 'PUBLISHED' only
               ├─ null → notFound()
-              └─ buildRecipeJsonLd(...) → <script type="application/ld+json">
-                 toRecipeDocument(recipe) → <RecipePage mode="published">
+              └─ getRelatedPublishedRecipes(blog.id, recipe.id)   # other recipes in its groups
+                 buildRecipeJsonLd(...) → <script type="application/ld+json">
+                 toRecipeDocument(recipe) → <RecipePage mode="published" related={…}>
   → generateMetadata: title, description, canonical, Open Graph
 ```
 
@@ -331,6 +348,7 @@ GET /<subdomain>/recipes/<slug>
 | File                                                                                                | Why it must be a client component              |
 | --------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | `apps/foodblog/src/components/recipe/recipe-editor.tsx`                                             | Holds the whole editing document in `useState` |
+| `apps/foodblog/src/components/recipe/group-panel.tsx`                                               | `useState` for the group-name input            |
 | `apps/foodblog/src/components/dashboard/dashboard-nav.tsx`                                          | `usePathname` for the active link              |
 | `apps/foodblog/src/components/site/site-nav.tsx`                                                    | `usePathname` for the active link              |
 | `apps/foodblog/src/components/dashboard/delete-recipe-button.tsx`                                   | `ConfirmDialog` open state and `useTransition` |
@@ -417,11 +435,21 @@ _Consequence:_ child row ids are not stable across saves; nothing may reference 
 `mode: 'edit' | 'preview' | 'published'` and swaps text nodes for inline fields in place. _Why:_ the
 editor cannot drift away from what a reader sees. _Consequence:_ it must stay hook-free so the
 public route can render it on the server, and any new recipe content block must be added there once
-rather than twice.
+rather than twice. The one section it renders for readers but not on the canvas is
+"More in <group>", because the group panel beside the canvas is already listing the same recipes;
+preview shows it, so the cook can still check it before publishing.
 
 **The editor is a canvas, not a form.** No settings sidebar, no field list. _Why:_ the target user
 is a cook, not an administrator. _Consequence:_ new fields must find a home in the reading layout;
 if there is no natural place for it in the published page, question the field.
+
+**The group panel is the one thing beside the canvas.** Everything that belongs to the recipe is
+edited in place; grouping is a relationship _between_ recipes, so it has no position in a single
+recipe's reading layout and sits in a rail to the right instead
+(`apps/foodblog/src/components/recipe/group-panel.tsx`). _Why:_ a cook needs to see what a group
+already holds while deciding whether this recipe joins it. _Consequence:_ the rail is chrome — it
+uses the platform `--ui-*` tokens, disappears in preview, and stacks under the canvas below `64rem`.
+It is not a precedent for a settings sidebar: nothing that is part of the recipe may move into it.
 
 **Preview is an in-page mode toggle.** _Why:_ it reuses the same component tree with zero extra
 state. _Consequence:_ it diverges from the intended MVP, which specifies a modal.
@@ -556,23 +584,24 @@ dependency as `"workspace:*"`, and add the package name to `transpilePackages` i
 
 ## 12. Known limitations and planned work
 
-| Gap                                                                            | Status                  | Impact                                                                            |
-| ------------------------------------------------------------------------------ | ----------------------- | --------------------------------------------------------------------------------- |
-| No test tooling at all — no runner, no `test` script, no test files            | Planned                 | Every change is verified by `typecheck`, `lint` and manual clicking               |
-| Preview is an in-page toggle, not a modal                                      | Planned                 | Diverges from the MVP definition                                                  |
-| Logo and brand colour are the only appearance controls                         | Implemented             | Themes were removed; `apps/foodblog/src/lib/blog/brand.ts` is the seam            |
-| JSON-LD is serialised without escaping `</script>`                             | Planned (security)      | Breakout risk on published recipe pages — see [§9](#9-security-and-authorization) |
-| No image upload; hero images are external URLs rendered through a raw `<img>`  | Planned                 | No `next/image`, no domain allowlist, no size limits                              |
-| No tags or categories as first-class data                                      | Planned                 | Only the `cuisine` and `course` strings exist                                     |
-| No autosave and no unsaved-changes warning                                     | Planned                 | Navigating away from the editor loses work                                        |
-| Save rewrites the whole ingredient and instruction tree                        | Accepted trade-off      | Child row ids are unstable                                                        |
-| Unpublishing clears `publishedAt`                                              | Accepted trade-off      | Re-publishing produces a new date                                                 |
-| No email verification, password reset, or rate limiting                        | Planned                 | `User.emailVerifiedAt` is the prepared seam                                       |
-| Expired `Session` rows are never swept                                         | Planned                 | Table grows unbounded                                                             |
-| `BlogRole.EDITOR` unenforced; `userCanEditBlog()` is dead code                 | Planned                 | Multi-author blogs are modelled but not usable                                    |
-| `uniqueSlug()` in `apps/foodblog/src/lib/slug.ts` is unused                    | Debt                    | Slug collisions surface as a user-facing error instead of being resolved          |
-| Subdomain hosting is path-based (`/<subdomain>`); no middleware rewrite exists | Planned                 | The seam is `apps/foodblog/src/lib/tenant.ts`                                     |
-| No custom domains, billing, comments, ratings, or newsletters                  | Not planned for the MVP | The Settings page shows a "Coming soon" badge for custom domains                  |
+| Gap                                                                            | Status                  | Impact                                                                                       |
+| ------------------------------------------------------------------------------ | ----------------------- | -------------------------------------------------------------------------------------------- |
+| No test tooling at all — no runner, no `test` script, no test files            | Planned                 | Every change is verified by `typecheck`, `lint` and manual clicking                          |
+| Preview is an in-page toggle, not a modal                                      | Planned                 | Diverges from the MVP definition                                                             |
+| Logo and brand colour are the only appearance controls                         | Implemented             | Themes were removed; `apps/foodblog/src/lib/blog/brand.ts` is the seam                       |
+| JSON-LD is serialised without escaping `</script>`                             | Planned (security)      | Breakout risk on published recipe pages — see [§9](#9-security-and-authorization)            |
+| No image upload; hero images are external URLs rendered through a raw `<img>`  | Planned                 | No `next/image`, no domain allowlist, no size limits                                         |
+| Groups have no archive page, so a reader cannot browse one whole group         | Planned                 | A group surfaces only as "More in …" at the end of a recipe                                  |
+| No tags or categories as first-class data                                      | Planned                 | Only the `cuisine` and `course` strings exist; a `Group` is a set of recipes, not a taxonomy |
+| No autosave and no unsaved-changes warning                                     | Planned                 | Navigating away from the editor loses work                                                   |
+| Save rewrites the whole ingredient and instruction tree                        | Accepted trade-off      | Child row ids are unstable                                                                   |
+| Unpublishing clears `publishedAt`                                              | Accepted trade-off      | Re-publishing produces a new date                                                            |
+| No email verification, password reset, or rate limiting                        | Planned                 | `User.emailVerifiedAt` is the prepared seam                                                  |
+| Expired `Session` rows are never swept                                         | Planned                 | Table grows unbounded                                                                        |
+| `BlogRole.EDITOR` unenforced; `userCanEditBlog()` is dead code                 | Planned                 | Multi-author blogs are modelled but not usable                                               |
+| `uniqueSlug()` in `apps/foodblog/src/lib/slug.ts` is unused                    | Debt                    | Slug collisions surface as a user-facing error instead of being resolved                     |
+| Subdomain hosting is path-based (`/<subdomain>`); no middleware rewrite exists | Planned                 | The seam is `apps/foodblog/src/lib/tenant.ts`                                                |
+| No custom domains, billing, comments, ratings, or newsletters                  | Not planned for the MVP | The Settings page shows a "Coming soon" badge for custom domains                             |
 
 ---
 

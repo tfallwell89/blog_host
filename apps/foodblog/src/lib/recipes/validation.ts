@@ -1,9 +1,14 @@
 import { z } from 'zod';
 
+import { slugify } from '@/lib/slug';
 import { isHttpUrl } from '@/lib/url';
 
 export const RECIPE_STATUS_VALUES = ['DRAFT', 'PUBLISHED'] as const;
 export const RECIPE_DIFFICULTY_VALUES = ['EASY', 'MEDIUM', 'HARD'] as const;
+
+/** Length of a group name, and of the slug derived from it. */
+export const GROUP_NAME_MAX = 60;
+export const MAX_GROUPS_PER_RECIPE = 10;
 
 const MINUTES_IN_A_WEEK = 60 * 24 * 7;
 
@@ -35,6 +40,17 @@ export const recipeSlugSchema = z
   .min(3, 'Use at least 3 characters')
   .max(80, 'Keep the address under 80 characters')
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, numbers and single hyphens only');
+
+/**
+ * A group is addressed by the slug of its name, so a name that slugifies to
+ * nothing ("???") could never be found again.
+ */
+export const groupNameSchema = z
+  .string()
+  .trim()
+  .min(2, 'Give the group a name, for example "Weeknight dinners"')
+  .max(GROUP_NAME_MAX, `Keep group names under ${GROUP_NAME_MAX} characters`)
+  .refine((value) => slugify(value, GROUP_NAME_MAX) !== '', 'Use letters or numbers in the name');
 
 export const ingredientSchema = z.object({
   text: z
@@ -116,6 +132,10 @@ export const recipeInputSchema = z.object({
     .transform((value) => (value === '' ? null : value)),
   notes: optionalText(5000, 'Keep the notes under 5000 characters'),
   status: z.enum(RECIPE_STATUS_VALUES),
+  /** Names of the groups this recipe belongs to; missing ones are created. */
+  groups: z
+    .array(groupNameSchema)
+    .max(MAX_GROUPS_PER_RECIPE, `A recipe can join ${MAX_GROUPS_PER_RECIPE} groups at most`),
   ingredientGroups: z
     .array(ingredientGroupSchema)
     .min(1, 'A recipe needs at least one ingredient group')

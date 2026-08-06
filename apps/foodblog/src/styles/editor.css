@@ -57,12 +57,207 @@
 
 /* Canvas ------------------------------------------------------------------ */
 
+/* One column while previewing — a reader sees the page and nothing beside it. */
+.editor__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ui-space-4);
+  align-items: start;
+}
+
+.editor__layout--editing {
+  grid-template-columns: minmax(0, 1fr) 19rem;
+}
+
 .editor__canvas {
   min-height: 0;
   padding-block: var(--ui-space-7);
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   box-shadow: var(--ui-shadow-sm);
+}
+
+/* Group rail -------------------------------------------------------------- */
+
+/*
+ * The rail is editor chrome, not part of the recipe: it uses the platform
+ * tokens and the sans stack so it reads as a tool beside the page rather than
+ * something a reader would get. It carries no recipe content — everything in
+ * it is either a group name or another recipe.
+ */
+.editor__rail {
+  position: sticky;
+  /* Clear of the sticky action bar. */
+  top: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+  font-family: var(--ui-font-sans);
+  background-color: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+.editor__rail-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.editor__rail-hint,
+.editor__rail-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--ui-color-text-muted);
+}
+
+.editor__rail-empty {
+  padding: var(--ui-space-3);
+  border: 1px dashed var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-md);
+}
+
+.group-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.group-chip {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.25rem 0.35rem 0.25rem 0.6rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ui-color-text);
+  background-color: var(--ui-color-primary-soft);
+  border: 1px solid color-mix(in srgb, var(--ui-color-primary) 30%, transparent);
+  border-radius: var(--ui-radius-full);
+}
+
+.group-chip__remove {
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  font-size: 0.6875rem;
+  line-height: 1;
+  color: var(--ui-color-text-muted);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--ui-radius-full);
+}
+
+.group-chip__remove:hover {
+  color: var(--ui-color-primary-contrast);
+  background-color: var(--ui-color-primary);
+}
+
+.group-add {
+  display: flex;
+  gap: var(--ui-space-2);
+  align-items: center;
+}
+
+.group-add .ui-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.group-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+}
+
+.group-suggestion {
+  padding: 0.25rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ui-color-text-muted);
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px dashed var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-full);
+}
+
+.group-suggestion:hover {
+  color: var(--ui-color-primary);
+  border-color: var(--ui-color-primary);
+}
+
+.group-related {
+  padding-top: var(--ui-space-3);
+  border-top: 1px solid var(--ui-color-border);
+}
+
+.group-related__title {
+  margin: 0 0 var(--ui-space-2);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--ui-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.group-related__empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--ui-color-text-muted);
+}
+
+/* A vertical stack: the rail is too narrow for anything that scrolls sideways. */
+.group-related__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.group-related__item {
+  display: flex;
+  gap: var(--ui-space-2);
+  align-items: center;
+  padding: var(--ui-space-2);
+  color: var(--ui-color-text);
+  text-decoration: none;
+  background-color: var(--ui-color-surface-muted);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+}
+
+.group-related__item:hover {
+  border-color: var(--ui-color-primary);
+}
+
+.group-related__thumb {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: cover;
+  background-color: var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+}
+
+.group-related__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 /* Inline fields ----------------------------------------------------------- */
@@ -385,6 +580,17 @@
 @media (hover: none) {
   .canvas-controls {
     opacity: 1;
+  }
+}
+
+/* Under this the canvas needs the whole width, so the rail moves beneath it. */
+@media (max-width: 64rem) {
+  .editor__layout--editing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor__rail {
+    position: static;
   }
 }
 

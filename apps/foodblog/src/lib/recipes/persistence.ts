@@ -1,8 +1,9 @@
 import { Prisma } from '@prisma/client';
 
 import { prisma } from '@/lib/db';
+import { slugify } from '@/lib/slug';
 
-import type { RecipeInput } from './validation';
+import { GROUP_NAME_MAX, type RecipeInput } from './validation';
 
 export type WriteRecipeResult =
   { ok: true; recipeId: string } | { ok: false; reason: 'slug-taken' | 'not-found' };
@@ -57,16 +58,60 @@ function isSlugConflict(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
 }
 
+/**
+ * Turns the group names the editor sent into group ids, creating the ones the
+ * blog does not have yet. Names are matched on their slug, so "Weeknight
+ * Dinners" joins the existing "Weeknight dinners" rather than sitting beside
+ * it; the name the group was created with is the one that is kept.
+ */
+async function groupIdsFor(
+  tx: Prisma.TransactionClient,
+  blogId: string,
+  names: string[],
+): Promise<string[]> {
+  const bySlug = new Map<string, string>();
+  for (const name of names) {
+    const slug = slugify(name, GROUP_NAME_MAX);
+    if (slug !== '' && !bySlug.has(slug)) bySlug.set(slug, name);
+  }
+
+  const ids: string[] = [];
+  for (const [slug, name] of bySlug) {
+    const group = await tx.group.upsert({
+      where: { blogId_slug: { blogId, slug } },
+      create: { blogId, slug, name },
+      update: {},
+      select: { id: true },
+    });
+    ids.push(group.id);
+  }
+
+  return ids;
+}
+
+/**
+ * Groups exist only to hold recipes, so the last recipe leaving one takes it
+ * with it. Without this the name would keep being offered in the editor.
+ */
+async function pruneEmptyGroups(tx: Prisma.TransactionClient, blogId: string): Promise<void> {
+  await tx.group.deleteMany({ where: { blogId, recipes: { none: {} } } });
+}
+
 export async function createRecipe(blogId: string, input: RecipeInput): Promise<WriteRecipeResult> {
   try {
-    const created = await prisma.recipe.create({
-      data: {
-        blogId,
-        ...scalarRecipeData(input),
-        publishedAt: input.status === 'PUBLISHED' ? new Date() : null,
-        ...nestedGroupsData(input),
-      },
-      select: { id: true },
+    const created = await prisma.$transaction(async (tx) => {
+      const groupIds = await groupIdsFor(tx, blogId, input.groups);
+
+      return tx.recipe.create({
+        data: {
+          blogId,
+          ...scalarRecipeData(input),
+          publishedAt: input.status === 'PUBLISHED' ? new Date() : null,
+          ...nestedGroupsData(input),
+          groups: { create: groupIds.map((groupId) => ({ groupId })) },
+        },
+        select: { id: true },
+      });
     });
 
     return { ok: true, recipeId: created.id };
@@ -79,7 +124,8 @@ export async function createRecipe(blogId: string, input: RecipeInput): Promise<
 /**
  * Overwrites a recipe the given blog owns. The ingredient and instruction
  * trees are rebuilt from scratch inside a transaction, which keeps positions
- * consistent however the editor reordered them.
+ * consistent however the editor reordered them. Group membership is rebuilt
+ * the same way, from the names the editor sent.
  */
 export async function replaceRecipe(
   blogId: string,
@@ -97,14 +143,23 @@ export async function replaceRecipe(
   const publishedAt = input.status === 'PUBLISHED' ? (existing.publishedAt ?? new Date()) : null;
 
   try {
-    await prisma.$transaction([
-      prisma.ingredientGroup.deleteMany({ where: { recipeId } }),
-      prisma.instructionGroup.deleteMany({ where: { recipeId } }),
-      prisma.recipe.update({
+    await prisma.$transaction(async (tx) => {
+      const groupIds = await groupIdsFor(tx, blogId, input.groups);
+
+      await tx.ingredientGroup.deleteMany({ where: { recipeId } });
+      await tx.instructionGroup.deleteMany({ where: { recipeId } });
+      await tx.groupedRecipe.deleteMany({ where: { recipeId } });
+      await tx.recipe.update({
         where: { id: recipeId },
-        data: { ...scalarRecipeData(input), publishedAt, ...nestedGroupsData(input) },
-      }),
-    ]);
+        data: {
+          ...scalarRecipeData(input),
+          publishedAt,
+          ...nestedGroupsData(input),
+          groups: { create: groupIds.map((groupId) => ({ groupId })) },
+        },
+      });
+      await pruneEmptyGroups(tx, blogId);
+    });
   } catch (error) {
     if (isSlugConflict(error)) return { ok: false, reason: 'slug-taken' };
     throw error;
@@ -115,6 +170,11 @@ export async function replaceRecipe(
 
 /** Scoped to the blog, so an id from another tenant matches nothing. */
 export async function deleteRecipe(blogId: string, recipeId: string): Promise<boolean> {
-  const deleted = await prisma.recipe.deleteMany({ where: { id: recipeId, blogId } });
-  return deleted.count > 0;
+  const deleted = await prisma.$transaction(async (tx) => {
+    const result = await tx.recipe.deleteMany({ where: { id: recipeId, blogId } });
+    if (result.count > 0) await pruneEmptyGroups(tx, blogId);
+    return result.count;
+  });
+
+  return deleted > 0;
 }

@@ -46,6 +46,24 @@ export interface RecipeByline {
   publishedAt: string | null;
 }
 
+/**
+ * A recipe from one of this recipe's groups, ready to render as a card. The
+ * link arrives built so this component needs no tenant helpers, exactly like
+ * `indexHref`.
+ */
+export interface RelatedRecipeCard {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string | null;
+  href: string;
+}
+
+export interface RelatedGroup {
+  name: string;
+  recipes: RelatedRecipeCard[];
+}
+
 export interface RecipeEditContext {
   onChange: <K extends keyof RecipeDocument>(field: K, value: RecipeDocument[K]) => void;
   fieldErrors?: FieldErrors;
@@ -58,13 +76,15 @@ interface RecipePageBaseProps {
   byline: RecipeByline;
   /** The blog's recipe index, where the reader-facing links point. */
   indexHref: string;
+  /** Other recipes in this recipe's groups, one entry per group. */
+  related?: RelatedGroup[];
 }
 
 export type RecipePageProps = RecipePageBaseProps &
   ({ mode: 'edit'; edit: RecipeEditContext } | { mode: 'preview' | 'published'; edit?: undefined });
 
 export function RecipePage(props: RecipePageProps) {
-  const { recipe, byline, indexHref } = props;
+  const { recipe, byline, indexHref, related } = props;
   // A single narrowing, so every section below reads the same way: `edit` is
   // the editing context when the canvas is live and null when it is not.
   const edit = props.mode === 'edit' ? props.edit : null;
@@ -125,6 +145,8 @@ export function RecipePage(props: RecipePageProps) {
       </div>
 
       <RecipeNotes recipe={recipe} edit={edit} />
+
+      {edit ? null : <RecipeRelated groups={related ?? []} />}
 
       {edit ? null : (
         <div className="recipe__actions">
@@ -364,6 +386,55 @@ function RecipeNotes({ recipe, edit }: SectionProps) {
         error={edit.fieldErrors?.notes}
       />
     </section>
+  );
+}
+
+/**
+ * The other recipes in each group this one belongs to. The editing canvas
+ * leaves it out: the group panel beside the canvas is already showing the same
+ * recipes while the cook decides which groups this one joins.
+ */
+function RecipeRelated({ groups }: { groups: RelatedGroup[] }) {
+  if (groups.length === 0) return null;
+
+  return (
+    <>
+      {groups.map((group, groupIndex) => {
+        const headingId = `related-${groupIndex}-heading`;
+
+        return (
+          <section className="recipe__related" key={group.name} aria-labelledby={headingId}>
+            <h2 className="recipe__section-title" id={headingId}>
+              More in {group.name}
+            </h2>
+
+            <ul className="recipe-grid">
+              {group.recipes.map((item) => (
+                <li className="recipe-card" key={item.id}>
+                  {item.imageUrl ? (
+                    <img
+                      className="recipe-card__image"
+                      src={item.imageUrl}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <div className="recipe-card__image" />
+                  )}
+                  <div className="recipe-card__body">
+                    <h3 className="recipe-card__title">
+                      <Link href={item.href}>{item.title}</Link>
+                    </h3>
+                    <p className="recipe-card__description">{item.description}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </>
   );
 }
 

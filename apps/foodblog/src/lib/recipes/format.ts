@@ -11,6 +11,13 @@ export const STATUS_LABELS: Record<RecipeStatus, string> = {
   PUBLISHED: 'Published',
 };
 
+/**
+ * How many recipes a "More in <group>" section shows. It lives here because
+ * the public page reads it through the query and the editor's preview applies
+ * the same cap to the groups it already has in memory.
+ */
+export const RELATED_RECIPES_PER_GROUP = 3;
+
 export interface RecipeTimings {
   prepMinutes: number | null;
   cookMinutes: number | null;

@@ -454,6 +454,12 @@ html:has(.site) {
   border-radius: var(--site-radius);
 }
 
+/* The other recipes in a group, in the same cards the index uses. */
+.recipe__related {
+  padding-top: var(--ui-space-5);
+  border-top: 1px solid var(--site-border);
+}
+
 .recipe__actions {
   display: flex;
   flex-wrap: wrap;
@@ -532,6 +538,7 @@ html:has(.site) {
   .site__footer,
   .recipe__back,
   .recipe__actions,
+  .recipe__related,
   .recipe__image {
     display: none;
   }

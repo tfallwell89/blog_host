@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { toRecipeDocument } from '@/components/recipe/recipe-document';
 import { RecipeEditor } from '@/components/recipe/recipe-editor';
 import { requireBlog } from '@/lib/blog/guards';
-import { getEditableRecipe } from '@/lib/recipes/queries';
+import { getEditableRecipe, getGroupsForBlog } from '@/lib/recipes/queries';
 
 // The canvas is the published page, so it needs the public stylesheet too.
 import '@/styles/site.css';
@@ -32,7 +32,11 @@ export default async function EditRecipePage({
   const { saved } = await searchParams;
 
   // Scoped to the signed-in user's blogs, so another tenant's id simply 404s.
-  const recipe = await getEditableRecipe(recipeId, user.id);
+  const [recipe, groups] = await Promise.all([
+    getEditableRecipe(recipeId, user.id),
+    getGroupsForBlog(blog.id),
+  ]);
+
   if (!recipe) {
     notFound();
   }
@@ -48,6 +52,7 @@ export default async function EditRecipePage({
       initialRecipe={toRecipeDocument(recipe)}
       initialStatus={recipe.status}
       initialPublishedAt={recipe.publishedAt?.toISOString() ?? null}
+      groups={groups}
       savedNotice={saved ? SAVED_NOTICES[saved] : undefined}
     />
   );

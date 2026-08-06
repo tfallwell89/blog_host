@@ -1,6 +1,7 @@
 import { PrismaClient, type Prisma } from '@prisma/client';
 
 import { hashPassword } from '../src/lib/auth/password';
+import { slugify } from '../src/lib/slug';
 
 const prisma = new PrismaClient();
 
@@ -24,6 +25,8 @@ interface SeedRecipe {
   notes?: string;
   status: 'DRAFT' | 'PUBLISHED';
   publishedDaysAgo?: number;
+  /** Names of the recipe groups this recipe belongs to. */
+  groups: string[];
   ingredientGroups: { title: string; ingredients: string[] }[];
   instructionGroups: { title: string; steps: string[] }[];
 }
@@ -48,6 +51,7 @@ const recipes: SeedRecipe[] = [
       'Bone-in thighs give you the best skin, but boneless work if you drop the oven time to 8 minutes. The sauce splits if it boils hard — keep it at a lazy simmer once the butter goes in.',
     status: 'PUBLISHED',
     publishedDaysAgo: 4,
+    groups: ['Weeknight dinners', '30-minute meals'],
     ingredientGroups: [
       {
         title: 'For the chicken',
@@ -110,6 +114,7 @@ const recipes: SeedRecipe[] = [
       'Freezes beautifully for three months. Hold back the basil until you reheat it, otherwise it turns grey.',
     status: 'PUBLISHED',
     publishedDaysAgo: 11,
+    groups: ['Weeknight dinners', 'Cook once, eat twice'],
     ingredientGroups: [
       {
         title: 'For the roasted tomatoes',
@@ -172,6 +177,7 @@ const recipes: SeedRecipe[] = [
       'Chop a bar of chocolate rather than using chips — the shards melt into ribbons instead of staying as buttons.',
     status: 'PUBLISHED',
     publishedDaysAgo: 21,
+    groups: ['Weekend baking'],
     ingredientGroups: [
       {
         title: 'For the dough',
@@ -237,6 +243,7 @@ const recipes: SeedRecipe[] = [
     course: 'Main course',
     difficulty: 'EASY',
     status: 'DRAFT',
+    groups: ['Weeknight dinners', '30-minute meals'],
     ingredientGroups: [
       {
         title: 'For the pasta',
@@ -346,8 +353,31 @@ async function main(): Promise<void> {
     },
   });
 
+  const recipeIds = new Map<string, string>();
   for (const recipe of recipes) {
-    await prisma.recipe.create({ data: toRecipeCreateInput(recipe, blog.id) });
+    const created = await prisma.recipe.create({
+      data: toRecipeCreateInput(recipe, blog.id),
+      select: { id: true },
+    });
+    recipeIds.set(recipe.slug, created.id);
+  }
+
+  // One group row per distinct name, holding every recipe that named it.
+  const groupNames = [...new Set(recipes.flatMap((recipe) => recipe.groups))];
+  for (const name of groupNames) {
+    await prisma.group.create({
+      data: {
+        blogId: blog.id,
+        name,
+        slug: slugify(name),
+        recipes: {
+          create: recipes.flatMap((recipe) => {
+            const recipeId = recipeIds.get(recipe.slug);
+            return recipe.groups.includes(name) && recipeId ? [{ recipeId }] : [];
+          }),
+        },
+      },
+    });
   }
 
   const published = recipes.filter((recipe) => recipe.status === 'PUBLISHED').length;
@@ -357,6 +387,7 @@ async function main(): Promise<void> {
       'Seed complete.',
       `  Blog:     ${blog.name} (/${blog.subdomain})`,
       `  Recipes:  ${published} published, ${recipes.length - published} draft`,
+      `  Groups:   ${groupNames.length}`,
       `  Sign in:  ${DEMO_EMAIL} / ${DEMO_PASSWORD}`,
     ].join('\n'),
   );

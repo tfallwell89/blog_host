@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge, Button, buttonClassName } from '@bloghost/ui';
+import { Badge, Button, buttonClassName, cn } from '@bloghost/ui';
 import type { RecipeStatus } from '@prisma/client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,11 +9,13 @@ import { useState, useTransition } from 'react';
 import { brandColorStyle } from '@/lib/blog/brand';
 import type { FieldErrors } from '@/lib/form';
 import { saveRecipeAction } from '@/lib/recipes/actions';
+import { RELATED_RECIPES_PER_GROUP } from '@/lib/recipes/format';
 import { slugify } from '@/lib/slug';
 import { blogPath, blogRecipePath } from '@/lib/tenant';
 
-import { RecipePage } from './recipe-page';
-import { toFormValues, type RecipeDocument } from './recipe-document';
+import { GroupPanel, type EditorGroup } from './group-panel';
+import { groupNameKey, toFormValues, type RecipeDocument } from './recipe-document';
+import { RecipePage, type RelatedGroup } from './recipe-page';
 
 /**
  * The chrome around the recipe canvas: an action bar, save state, and the
@@ -26,6 +28,11 @@ export interface RecipeEditorProps {
   initialStatus: RecipeStatus;
   /** ISO publication timestamp, shown in the byline. */
   initialPublishedAt: string | null;
+  /**
+   * Every group on the blog. Unlike the document this is server state, so it
+   * stays a prop and refreshes with the route after a save.
+   */
+  groups: EditorGroup[];
   recipeId?: string;
   savedNotice?: string;
 }
@@ -35,6 +42,7 @@ export function RecipeEditor({
   initialRecipe,
   initialStatus,
   initialPublishedAt,
+  groups,
   recipeId,
   savedNotice,
 }: RecipeEditorProps) {
@@ -109,6 +117,32 @@ export function RecipeEditor({
   const byline = { authorName: blog.authorName, publishedAt };
   const indexHref = blogPath(blog.subdomain);
 
+  // What the "More in …" sections will hold once this document is published,
+  // derived from the groups it currently names so preview shows the real thing.
+  const relatedGroups: RelatedGroup[] = recipe.groups
+    .map((name) => groups.find((group) => groupNameKey(group.name) === groupNameKey(name)))
+    .filter((group): group is EditorGroup => group !== undefined)
+    .map((group) => ({
+      name: group.name,
+      recipes: group.recipes
+        .filter((item) => item.status === 'PUBLISHED' && item.id !== recipeId)
+        .slice(0, RELATED_RECIPES_PER_GROUP)
+        .map((item) => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          imageUrl: item.featuredImageUrl,
+          href: blogRecipePath(blog.subdomain, item.slug),
+        })),
+    }))
+    .filter((group) => group.recipes.length > 0);
+
+  const groupsError = fieldErrors
+    ? Object.entries(fieldErrors).find(
+        ([key]) => key === 'groups' || key.startsWith('groups.'),
+      )?.[1]
+    : undefined;
+
   return (
     <div className="editor">
       <div className="editor__bar">
@@ -165,24 +199,43 @@ export function RecipeEditor({
         </p>
       ) : null}
 
-      <div className="editor__canvas site" style={brandColorStyle(blog.brandColor)}>
-        <div className="site-container">
-          {previewing ? (
-            <RecipePage mode="preview" recipe={recipe} byline={byline} indexHref={indexHref} />
-          ) : (
-            <RecipePage
-              mode="edit"
-              recipe={recipe}
-              byline={byline}
-              indexHref={indexHref}
-              edit={{
-                onChange: handleChange,
-                fieldErrors,
-                slugPrefix: `${indexHref}/recipes/`,
-              }}
-            />
-          )}
+      {/* Preview drops the rail: a reader gets the page column and nothing else. */}
+      <div className={cn('editor__layout', !previewing && 'editor__layout--editing')}>
+        <div className="editor__canvas site" style={brandColorStyle(blog.brandColor)}>
+          <div className="site-container">
+            {previewing ? (
+              <RecipePage
+                mode="preview"
+                recipe={recipe}
+                byline={byline}
+                indexHref={indexHref}
+                related={relatedGroups}
+              />
+            ) : (
+              <RecipePage
+                mode="edit"
+                recipe={recipe}
+                byline={byline}
+                indexHref={indexHref}
+                edit={{
+                  onChange: handleChange,
+                  fieldErrors,
+                  slugPrefix: `${indexHref}/recipes/`,
+                }}
+              />
+            )}
+          </div>
         </div>
+
+        {previewing ? null : (
+          <GroupPanel
+            selected={recipe.groups}
+            onChange={(next) => handleChange('groups', next)}
+            groups={groups}
+            recipeId={recipeId}
+            error={groupsError}
+          />
+        )}
       </div>
     </div>
   );
