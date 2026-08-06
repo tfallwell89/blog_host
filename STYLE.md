@@ -256,7 +256,7 @@ pages add a second, overridable layer of `--site-*` tokens in `apps/foodblog/src
 | Spacing           | `--ui-space-1` `0.25rem` → `--ui-space-8` `4rem`                                                                                                                                   |
 | Radius            | `--ui-radius-sm` `6px`, `-md` `10px`, `-lg` `16px`, `-full`. Public pages use `--site-radius`, set once on `.site`                                                                 |
 | Shadow            | `--ui-shadow-sm`, `-md`, `-lg`. Cards use `sm`, dialogs use `lg`                                                                                                                   |
-| Page width        | `.page` `72rem`, `.page--narrow` `44rem`, `.site-container` `62rem`, `.site-container--narrow` `44rem`, `.recipe` `60rem` over a `44rem` reading column, dashboard shell `88rem`   |
+| Page width        | `.page` `72rem`, `.page--narrow` `44rem`, `.site-container` `62rem`, `.site-container--narrow` `44rem`, dashboard shell `88rem`                                                    |
 | Layout helpers    | `.stack`, `.stack--lg`, `.row`, `.muted`, `.text-sm` in `apps/foodblog/src/app/globals.css`                                                                                        |
 
 | Element                   | Component / class                                                                                                          | Notes                                                                                                            |
@@ -344,11 +344,10 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
 
 ## 10. Public recipe-page rules
 
-- **Readability first.** Title through introduction, and the notes below, sit in a `44rem` reading
-  column, `line-height: 1.5` body, `1.2` headings with `text-wrap: balance`.
-- **Ingredients beside instructions.** `.recipe__content` is a `60rem` two-column grid — the
-  shopping list at `35fr`, the method it is read against at `65fr`, `--ui-space-8` between them.
-  It is the only part of the page wider than the reading column.
+- **Readability first.** The recipe is `.site-container--narrow` (`44rem`), `line-height: 1.5`
+  body, `1.2` headings with `text-wrap: balance`. Nothing on the page is wider than that column.
+- **Ingredients beside instructions.** Inside the reading column, `.recipe__content` splits the
+  two lists into a grid — the shopping list at `35fr`, the method it is read against at `65fr`.
 - **Hierarchy.** One `<h1>` (title), `<h2>` for Ingredients / Instructions / Notes, `<h3>` for group
   titles. Ingredients are a `<ul class="ingredient-list">`, instructions an
   `<ol class="step-list">`. Facts use a `<dl>`, so each label/value pair is machine-readable.

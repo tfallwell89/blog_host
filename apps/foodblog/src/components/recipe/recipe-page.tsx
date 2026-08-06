@@ -70,7 +70,7 @@ export function RecipePage(props: RecipePageProps) {
   const edit = props.mode === 'edit' ? props.edit : null;
 
   return (
-    <article className={cn('recipe', edit && 'recipe--editing')}>
+    <article className={cn('recipe', 'site-container--narrow', edit && 'recipe--editing')}>
       {edit ? null : (
         <Link className="recipe__back" href={indexHref}>
           ← All recipes

@@ -286,16 +286,6 @@ html:has(.site) {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-6);
-  max-width: 60rem;
-  margin-inline: auto;
-}
-
-/* The recipe is read in one narrow column — title through introduction, and the
-   notes below — and only the ingredients and instructions use the full width. */
-.recipe > :not(.recipe__content) {
-  width: 100%;
-  max-width: 44rem;
-  margin-inline: auto;
 }
 
 .recipe__back {
@@ -375,12 +365,13 @@ html:has(.site) {
   margin-bottom: 0;
 }
 
-/* Ingredients beside instructions: the shopping list is scanned, the method is
-   read, so the method gets the wider column. Collapses in the responsive rules. */
+/* Ingredients beside instructions, inside the one reading column: the shopping
+   list is scanned, the method is read, so the method gets the wider share.
+   Collapses to a single column in the responsive rules. */
 .recipe__content {
   display: grid;
   grid-template-columns: minmax(0, 35fr) minmax(0, 65fr);
-  gap: var(--ui-space-6) var(--ui-space-8);
+  gap: var(--ui-space-6);
   align-items: start;
 }
 
