@@ -158,7 +158,7 @@ and add a mode or a section to that component instead.
 | Component file          | `kebab-case.tsx`                                                                                             | `delete-recipe-button.tsx`                                         |
 | Props type              | `<Component>Props`, exported                                                                                 | `RecipeRowProps`                                                   |
 | Hook                    | `useThing`                                                                                                   | none custom yet; follow React's rule if you add one                |
-| Server action           | `<verb><Noun>Action` in `apps/foodblog/src/lib/<domain>/actions.ts`                                          | `saveRecipeAction`, `updateThemeAction`                            |
+| Server action           | `<verb><Noun>Action` in `apps/foodblog/src/lib/<domain>/actions.ts`                                          | `saveRecipeAction`, `updateAppearanceAction`                       |
 | Query                   | `get…` / `is…` / `…CanEdit` in `apps/foodblog/src/lib/<domain>/queries.ts`                                   | `getPublishedRecipeBySlug`, `isSubdomainAvailable`                 |
 | Write helper            | verb + noun in `apps/foodblog/src/lib/recipes/persistence.ts`                                                | `createRecipe`, `replaceRecipe`                                    |
 | Guard                   | `require…` / `redirectIf…` in `apps/foodblog/src/lib/<domain>/guards.ts`                                     | `requireBlog`                                                      |
@@ -168,7 +168,7 @@ and add a mode or a section to that component instead.
 | Result union            | `<Verb><Noun>Result`                                                                                         | `SaveRecipeResult`, `WriteRecipeResult`                            |
 | Route folder            | lowercase, `kebab-case`, dynamic segments in brackets                                                        | `dashboard/recipes/[recipeId]`, `site/[subdomain]`                 |
 | CSS class               | BEM-ish `block__element--modifier`; `ui-` prefix for `@bloghost/ui`, `site-`/`recipe-`/`editor-` for the app | `.recipe__fact-label`, `.ui-button--ghost`, `.editor__bar-actions` |
-| CSS variable            | `--ui-*` for platform tokens, `--site-*` for theme tokens                                                    | `--ui-space-4`, `--site-accent`                                    |
+| CSS variable            | `--ui-*` for platform tokens, `--site-*` for public blog tokens                                              | `--ui-space-4`, `--site-accent`                                    |
 | Prisma model            | `PascalCase` singular, `@@map` to snake_case plural                                                          | `InstructionStep` → `instruction_steps`                            |
 | Prisma field            | `camelCase`; `…At` for timestamps, `…Url` for URLs, `…Minutes` for durations                                 | `publishedAt`, `featuredImageUrl`, `cookMinutes`                   |
 | Public slug             | lowercase ASCII, hyphen-separated, no trailing hyphen                                                        | `lemon-garlic-butter-chicken`                                      |
@@ -254,9 +254,9 @@ pages add a second, overridable layer of `--site-*` tokens in `apps/foodblog/src
 | Colour — brand    | `--ui-color-primary` `#c2410c`, `--ui-color-primary-hover`, `--ui-color-primary-soft`, `--ui-color-primary-contrast`                                                               |
 | Colour — feedback | `--ui-color-danger` / `-hover` / `-soft`, `--ui-color-success` / `-soft`, `--ui-color-focus`                                                                                       |
 | Spacing           | `--ui-space-1` `0.25rem` → `--ui-space-8` `4rem`                                                                                                                                   |
-| Radius            | `--ui-radius-sm` `6px`, `-md` `10px`, `-lg` `16px`, `-full`. Public pages use `--site-radius`, which each theme sets                                                               |
+| Radius            | `--ui-radius-sm` `6px`, `-md` `10px`, `-lg` `16px`, `-full`. Public pages use `--site-radius`, set once on `.site`                                                                 |
 | Shadow            | `--ui-shadow-sm`, `-md`, `-lg`. Cards use `sm`, dialogs use `lg`                                                                                                                   |
-| Page width        | `.page` `72rem`, `.page--narrow` `44rem`, `.site-container` `62rem`, `.site-container--narrow` `44rem`, dashboard shell `88rem`                                                    |
+| Page width        | `.page` `72rem`, `.page--narrow` `44rem`, `.site-container` `62rem`, `.site-container--narrow` `44rem`, `.recipe` `60rem` over a `44rem` reading column, dashboard shell `88rem`   |
 | Layout helpers    | `.stack`, `.stack--lg`, `.row`, `.muted`, `.text-sm` in `apps/foodblog/src/app/globals.css`                                                                                        |
 
 | Element                   | Component / class                                                                                                          | Notes                                                                                                            |
@@ -270,13 +270,18 @@ pages add a second, overridable layer of `--site-*` tokens in `apps/foodblog/src
 | Empty state               | `EmptyState`                                                                                                               | Icon, title, description, one action; dashed border. Every list must have one                                    |
 | Shell                     | `DashboardShell`                                                                                                           | Topbar + 15rem sidebar, collapsing to a horizontal scroller under `48rem`                                        |
 | Alerts                    | `.alert`, `.alert--success`, `.alert--error`, `.alert--info`                                                               | Rendered by `FormAlert`                                                                                          |
-| Loading                   | Text and disabled controls — `Saving…`, `Working…`, `Applying theme…`                                                      | No spinner component exists; do not add one without a reason                                                     |
+| Loading                   | Text and disabled controls — `Saving…`, `Working…`, `Publishing…`                                                          | No spinner component exists; do not add one without a reason                                                     |
 | Error state               | Field-level `.ui-field__error` / `.editable__error`, summary `.alert--error`, page-level `apps/foodblog/src/app/error.tsx` |                                                                                                                  |
 | Focus                     | `:focus-visible` → `2px solid var(--ui-color-focus)`, `2px` offset, globally in `apps/foodblog/src/app/globals.css`        | Never remove it without an equivalent replacement                                                                |
 
-The public blog defines its own token block per theme on `.site[data-theme='…']`
-(`minimal` is the default `.site` block, plus `editorial` and `warm`). **The markup is identical
-across themes** — a theme may only change custom properties. Do not branch layout on the theme.
+The public blog has one token block, on `.site`: serif headings (`--site-heading-font`) over
+Helvetica body copy (`--site-body-font`). **There are no themes.** The only token that varies per
+blog is `--site-accent`, applied as an inline style from `Blog.brandColor` — so anything accented
+must mix from it, and no layout, spacing or type may branch on an owner's settings.
+
+The blog header (`.site__bar`) is sticky at the top of every public page and carries the logo, or
+the blog name when there is none. The tall centred masthead (`.site__masthead`) belongs to the home
+page only; every other page leads with its own `h1`.
 
 Mobile: the dashboard shell and the editor both break at `48rem`. On the editor the action bar
 stops being sticky and canvas controls become permanently visible (they are also always visible
@@ -292,7 +297,7 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
 ### The editor must
 
 - **Look like the published page.** It is literally the same component, inside
-  `.editor__canvas.site` with the blog's `data-theme` applied. `editor.css` may add editing
+  `.editor__canvas.site` with the blog's brand colour applied. `editor.css` may add editing
   affordances; it must never restyle the recipe itself.
 - **Edit in context.** Replace a text node with a field in the same position. `.editable` cancels
   its own padding with an equal negative margin so nothing shifts when a field appears.
@@ -326,7 +331,7 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
 - Look like a CRM record page, or present the recipe as one long stack of labelled form fields.
 - Use a settings sidebar as the primary editing surface.
 - Require the user to learn "blocks" before typing.
-- Expose design or theme controls (those live at `/dashboard/appearance`).
+- Expose design or appearance controls (those live at `/dashboard/appearance`).
 - Show database ids, positions, or status enum values. The only technical string a user sees is the
   slug, presented as an address with its reader-facing prefix.
 - Hide basic editing behind a menu, a right-click, or a mode switch.
@@ -339,8 +344,11 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
 
 ## 10. Public recipe-page rules
 
-- **Readability first.** The recipe is `.site-container--narrow` (`44rem`), `line-height: 1.5`
-  body, `1.2` headings with `text-wrap: balance`.
+- **Readability first.** Title through introduction, and the notes below, sit in a `44rem` reading
+  column, `line-height: 1.5` body, `1.2` headings with `text-wrap: balance`.
+- **Ingredients beside instructions.** `.recipe__content` is a `60rem` two-column grid — the
+  shopping list at `35fr`, the method it is read against at `65fr`, `--ui-space-8` between them.
+  It is the only part of the page wider than the reading column.
 - **Hierarchy.** One `<h1>` (title), `<h2>` for Ingredients / Instructions / Notes, `<h3>` for group
   titles. Ingredients are a `<ul class="ingredient-list">`, instructions an
   `<ol class="step-list">`. Facts use a `<dl>`, so each label/value pair is machine-readable.
@@ -359,9 +367,10 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
   existing link — there are no redirects. Treat a published slug as close to permanent.
 - **Unpublished content is unreachable.** Public queries filter `status: 'PUBLISHED'` and a miss
   is a `notFound()`, indistinguishable from a recipe that never existed.
-- **Shared identity.** Every blog uses the same markup, the same components and the same
-  `--site-*` token contract. A theme changes tokens only.
-- **Responsive.** Single column, container padding from `--ui-space-5`, images `max-width: 100%`.
+- **Shared identity.** Every blog uses the same markup, components, layout and type. A blog's own
+  logo and `--site-accent` are the only things that differ.
+- **Responsive.** `.recipe__content` collapses to one column under `64rem`, ingredients first;
+  container padding from `--ui-space-5`, images `max-width: 100%`.
 
 ---
 
@@ -370,7 +379,7 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
 Concrete requirements, most already met in the code:
 
 - **Semantic HTML.** `<article>`, `<header>`, `<nav>`, `<main>`, `<footer>`, `<dl>`, `<ul>`, `<ol>`,
-  `<fieldset>`/`<legend>` (theme picker). Never a `<div>` with `onClick`.
+  `<fieldset>`/`<legend>` (brand colour picker). Never a `<div>` with `onClick`.
 - **One `<h1>` per page**, no skipped levels.
 - **Landmarks and skip links.** `.skip-link` → `#site-main` on public pages; `DashboardShell`
   provides `<nav aria-label>` and `<main>`.
@@ -415,7 +424,7 @@ and describe their blog as "your food blog".
 | `Draft saved. Only you can see it.`                                     | `Operation completed successfully.`              |
 | `You already have a recipe at that address. Try a different one.`       | `Unique constraint violation on (blogId, slug).` |
 
-- Buttons are verbs. Pending labels are the verb in progress: `Saving…`, `Applying theme…`,
+- Buttons are verbs. Pending labels are the verb in progress: `Saving…`, `Publishing…`,
   `Working…` (with a real ellipsis character).
 - Empty states say what to do next and offer the action, in one or two sentences.
 - Do not explain the interface in the interface. One short hint under a field is the limit, and only
