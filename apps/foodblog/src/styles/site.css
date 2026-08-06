@@ -48,15 +48,19 @@ html:has(.site) {
   color: var(--site-accent);
 }
 
+/* The page column, and the only one: the bar, the content and the footer all
+   line up on these edges. `74rem` less the padding leaves 1136px of content. */
 .site-container {
   width: 100%;
-  max-width: 62rem;
+  max-width: 74rem;
   margin: 0 auto;
   padding: 0 var(--ui-space-5);
 }
 
+/* Pages that are nothing but prose keep a reading measure, centred in the page. */
 .site-container--narrow {
   max-width: 44rem;
+  margin-inline: auto;
 }
 
 /* Sticky bar ------------------------------------------------------------- */
@@ -499,7 +503,8 @@ html:has(.site) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* Tablets and phones read the recipe as one column, ingredients first. */
+  /* Tablets and phones read the recipe as one column, ingredients first. It
+     still fills the page column, so the edges stay where the bar's are. */
   .recipe__content {
     grid-template-columns: minmax(0, 1fr);
   }

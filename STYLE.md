@@ -256,7 +256,7 @@ pages add a second, overridable layer of `--site-*` tokens in `apps/foodblog/src
 | Spacing           | `--ui-space-1` `0.25rem` → `--ui-space-8` `4rem`                                                                                                                                   |
 | Radius            | `--ui-radius-sm` `6px`, `-md` `10px`, `-lg` `16px`, `-full`. Public pages use `--site-radius`, set once on `.site`                                                                 |
 | Shadow            | `--ui-shadow-sm`, `-md`, `-lg`. Cards use `sm`, dialogs use `lg`                                                                                                                   |
-| Page width        | `.page` `72rem`, `.page--narrow` `44rem`, `.site-container` `62rem`, `.site-container--narrow` `44rem`, dashboard shell `88rem`                                                    |
+| Page width        | `.page` `72rem`, `.page--narrow` `44rem`, `.site-container` `74rem` (1136px of content), `.site-container--narrow` `44rem`, dashboard shell `88rem`                                |
 | Layout helpers    | `.stack`, `.stack--lg`, `.row`, `.muted`, `.text-sm` in `apps/foodblog/src/app/globals.css`                                                                                        |
 
 | Element                   | Component / class                                                                                                          | Notes                                                                                                            |
@@ -344,9 +344,11 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
 
 ## 10. Public recipe-page rules
 
-- **Readability first.** The recipe is `.site-container--narrow` (`44rem`), `line-height: 1.5`
-  body, `1.2` headings with `text-wrap: balance`. Nothing on the page is wider than that column.
-- **Ingredients beside instructions.** Inside the reading column, `.recipe__content` splits the
+- **One column per page.** The recipe fills the page column (`.site-container`, 1136px of content),
+  so the back link, title, photo, lists and notes share their edges with the bar and the footer.
+  Nothing on a recipe page is wider or narrower than that column. `line-height: 1.5` body, `1.2`
+  headings with `text-wrap: balance`.
+- **Ingredients beside instructions.** Inside the page column, `.recipe__content` splits the
   two lists into a grid — the shopping list at `35fr`, the method it is read against at `65fr`.
 - **Hierarchy.** One `<h1>` (title), `<h2>` for Ingredients / Instructions / Notes, `<h3>` for group
   titles. Ingredients are a `<ul class="ingredient-list">`, instructions an
@@ -368,8 +370,8 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
   is a `notFound()`, indistinguishable from a recipe that never existed.
 - **Shared identity.** Every blog uses the same markup, components, layout and type. A blog's own
   logo and `--site-accent` are the only things that differ.
-- **Responsive.** `.recipe__content` collapses to one column under `64rem`, ingredients first;
-  container padding from `--ui-space-5`, images `max-width: 100%`.
+- **Responsive.** Under `64rem` the two lists collapse to one column, ingredients first, still
+  filling the page column; container padding from `--ui-space-5`, images `max-width: 100%`.
 
 ---
 
