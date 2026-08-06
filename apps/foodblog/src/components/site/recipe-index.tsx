@@ -33,7 +33,7 @@ export function RecipeIndex({ recipes, subdomain }: RecipeIndexProps) {
     <div>
       <div className="index__head">
         <div>
-          <h1 className="index__title">Recipes</h1>
+          <h2 className="index__title">Recipes</h2>
           <p className="index__count" role="status">
             {visible.length} {visible.length === 1 ? 'recipe' : 'recipes'}
             {normalised ? ` matching “${query.trim()}”` : ''}
@@ -76,9 +76,9 @@ export function RecipeIndex({ recipes, subdomain }: RecipeIndexProps) {
               )}
               <div className="recipe-card__body">
                 {recipe.eyebrow ? <p className="recipe-card__eyebrow">{recipe.eyebrow}</p> : null}
-                <h2 className="recipe-card__title">
+                <h3 className="recipe-card__title">
                   <Link href={blogRecipePath(subdomain, recipe.slug)}>{recipe.title}</Link>
-                </h2>
+                </h3>
                 <p className="recipe-card__description">{recipe.description}</p>
                 {recipe.timing ? <p className="recipe-card__meta">{recipe.timing}</p> : null}
               </div>

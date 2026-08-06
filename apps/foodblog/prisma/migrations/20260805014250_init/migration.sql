@@ -1,7 +1,4 @@
 -- CreateEnum
-CREATE TYPE "BlogTheme" AS ENUM ('MINIMAL', 'EDITORIAL', 'WARM');
-
--- CreateEnum
 CREATE TYPE "BlogRole" AS ENUM ('OWNER', 'EDITOR');
 
 -- CreateEnum
@@ -41,7 +38,8 @@ CREATE TABLE "blogs" (
     "subdomain" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "authorName" TEXT NOT NULL,
-    "theme" "BlogTheme" NOT NULL DEFAULT 'MINIMAL',
+    "logoUrl" TEXT,
+    "brandColor" TEXT NOT NULL DEFAULT '#1F6F5C',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

@@ -22,17 +22,17 @@ visual editor, and publishes them to a public blog served under `/<subdomain>`.
 
 ### MVP scope and status
 
-| Capability                                             | Status       | Notes                                                                                                                             |
-| ------------------------------------------------------ | ------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| Create and manage one food blog per account            | Implemented  | `createBlogAction` refuses a second blog                                                                                          |
-| Create, edit, save, publish, unpublish, delete recipes | Implemented  | See [§6](#6-recipe-lifecycle)                                                                                                     |
-| Visual page-like recipe editor (not an admin form)     | Implemented  | `RecipePage` renders edit / preview / published from one component                                                                |
-| Editor resembles the published page                    | Implemented  | Same component, same stylesheet, same theme tokens                                                                                |
-| Inline fields and contextual `+` controls              | Implemented  | `EditableText`, `CanvasAddButton`                                                                                                 |
-| Preview **in a modal**                                 | **Planned**  | Today preview is an in-page mode toggle, not a modal. See [§6](#6-recipe-lifecycle)                                               |
-| Publish makes the recipe publicly readable             | Implemented  |                                                                                                                                   |
-| One platform-wide visual system, no selectable themes  | **Diverges** | Markup and layout are platform-wide, but three token themes are user-selectable. See [§10](#10-important-architectural-decisions) |
-| Recipe metadata and structured data on public pages    | Implemented  | `generateMetadata` + `Recipe` JSON-LD                                                                                             |
+| Capability                                             | Status      | Notes                                                                                                                         |
+| ------------------------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Create and manage one food blog per account            | Implemented | `createBlogAction` refuses a second blog                                                                                      |
+| Create, edit, save, publish, unpublish, delete recipes | Implemented | See [§6](#6-recipe-lifecycle)                                                                                                 |
+| Visual page-like recipe editor (not an admin form)     | Implemented | `RecipePage` renders edit / preview / published from one component                                                            |
+| Editor resembles the published page                    | Implemented | Same component, same stylesheet, same `--site-*` tokens and brand colour                                                      |
+| Inline fields and contextual `+` controls              | Implemented | `EditableText`, `CanvasAddButton`                                                                                             |
+| Preview **in a modal**                                 | **Planned** | Today preview is an in-page mode toggle, not a modal. See [§6](#6-recipe-lifecycle)                                           |
+| Publish makes the recipe publicly readable             | Implemented |                                                                                                                               |
+| One platform-wide visual system, no selectable themes  | Implemented | One design for every blog; an owner controls a logo and a brand colour only. See [§10](#10-important-architectural-decisions) |
+| Recipe metadata and structured data on public pages    | Implemented | `generateMetadata` + `Recipe` JSON-LD                                                                                         |
 
 ### Recipe content model
 
@@ -81,13 +81,13 @@ bloghost/
 │           │   └── globals.css
 │           ├── components/
 │           │   ├── auth/            # sign-in / sign-up forms
-│           │   ├── blog/            # onboarding, settings, appearance, theme picker
+│           │   ├── blog/            # onboarding, settings, appearance, brand colour picker
 │           │   ├── dashboard/       # nav, recipe row, delete button, sign out
 │           │   ├── recipe/          # the recipe document, canvas and editor
 │           │   └── site/            # public blog nav, index, prose, print
 │           ├── lib/
 │           │   ├── auth/            # password, session, service, guards, actions
-│           │   ├── blog/            # queries, guards, actions, validation, themes
+│           │   ├── blog/            # queries, guards, actions, validation, brand
 │           │   ├── recipes/         # queries, persistence, actions, validation, format, json-ld
 │           │   ├── db.ts            # the Prisma client singleton
 │           │   ├── env.ts           # parsed, validated environment
@@ -167,7 +167,7 @@ All routes live under `apps/foodblog/src/app`.
 | `/dashboard/recipes?status=all\|published\|draft` | Recipe list and filter                                             | Authenticated + blog                                      | `apps/foodblog/src/app/dashboard/recipes/page.tsx`, `apps/foodblog/src/components/dashboard/recipe-row.tsx`, `apps/foodblog/src/components/dashboard/delete-recipe-button.tsx` | `getRecipesForBlog(blogId, status?)`                                                             |
 | `/dashboard/recipes/new`                          | Editor for an unsaved recipe                                       | Authenticated + blog                                      | `apps/foodblog/src/app/dashboard/recipes/new/page.tsx`                                                                                                                         | `requireBlog` only; document starts from `emptyRecipeDocument()`                                 |
 | `/dashboard/recipes/[recipeId]?saved=…`           | Editor for an existing recipe                                      | Authenticated + owner                                     | `apps/foodblog/src/app/dashboard/recipes/[recipeId]/page.tsx`                                                                                                                  | `getEditableRecipe(recipeId, userId)` — 404 if not owned                                         |
-| `/dashboard/appearance`                           | Theme switching                                                    | Authenticated + blog                                      | `apps/foodblog/src/app/dashboard/appearance/page.tsx`, `apps/foodblog/src/components/blog/appearance-form.tsx`                                                                 | `getThemeOption(blog.theme)`                                                                     |
+| `/dashboard/appearance`                           | Logo URL and brand colour                                          | Authenticated + blog                                      | `apps/foodblog/src/app/dashboard/appearance/page.tsx`, `apps/foodblog/src/components/blog/appearance-form.tsx`, `apps/foodblog/src/components/blog/brand-color-picker.tsx`     | `requireBlog`                                                                                    |
 | `/dashboard/settings`                             | Blog name, address, description, author; custom-domain placeholder | Authenticated + blog                                      | `apps/foodblog/src/app/dashboard/settings/page.tsx`, `apps/foodblog/src/components/blog/settings-form.tsx`                                                                     | `requireBlog`                                                                                    |
 | `/[subdomain]`                                    | Public recipe index with client-side title search                  | Public                                                    | `apps/foodblog/src/app/[subdomain]/page.tsx`, `apps/foodblog/src/app/[subdomain]/layout.tsx`, `apps/foodblog/src/components/site/recipe-index.tsx`                             | `getBlogBySubdomain`, `getPublishedRecipes`                                                      |
 | `/[subdomain]/recipes/[slug]`                     | Public recipe page + `Recipe` JSON-LD                              | Public                                                    | `apps/foodblog/src/app/[subdomain]/recipes/[slug]/page.tsx`, `apps/foodblog/src/components/recipe/recipe-page.tsx`                                                             | `getPublishedRecipeBySlug` — published only                                                      |
@@ -198,20 +198,20 @@ User ──< BlogMember >── Blog ──< Recipe ──< IngredientGroup ─�
  └──< Session
 ```
 
-| Model              | Purpose                                        | Key fields                                                | Relationships                                     | Ownership / lifecycle                                             | Constraints                                                                                | Delete behaviour                                                |
-| ------------------ | ---------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| `User`             | An account                                     | `email`, `passwordHash`, `displayName`, `emailVerifiedAt` | `sessions`, `memberships`                         | —                                                                 | `email` unique                                                                             | Deleting cascades sessions and memberships                      |
-| `Session`          | Server-side session                            | `tokenHash` (SHA-256 of the cookie value), `expiresAt`    | → `User`                                          | Expiry checked on read in `apps/foodblog/src/lib/auth/session.ts` | `tokenHash` unique; indexed on `userId`, `expiresAt`                                       | Cascades from `User`. **No background cleanup of expired rows** |
-| `Blog`             | One hosted food blog                           | `name`, `subdomain`, `description`, `authorName`, `theme` | `members`, `recipes`                              | Access via `BlogMember`                                           | `subdomain` unique globally                                                                | Cascades members and recipes                                    |
-| `BlogMember`       | User ↔ blog join with a role                   | `role` (`OWNER` \| `EDITOR`)                              | → `User`, → `Blog`                                | The only ownership record                                         | `@@unique([blogId, userId])`                                                               | Cascades from either side                                       |
-| `Recipe`           | A recipe                                       | See [§1](#recipe-content-model)                           | → `Blog`, `ingredientGroups`, `instructionGroups` | Owned via `blogId`                                                | `@@unique([blogId, slug])`; indexes `[blogId, status, publishedAt]`, `[blogId, updatedAt]` | Cascades both group trees                                       |
-| `IngredientGroup`  | Titled ingredient section; `title` may be null | `title`, `position`                                       | → `Recipe`, `ingredients`                         | Via recipe                                                        | Index `[recipeId, position]`                                                               | Cascades ingredients                                            |
-| `Ingredient`       | One ingredient line                            | `text`, `position`                                        | → `IngredientGroup`                               | Via group                                                         | Index `[groupId, position]`                                                                | —                                                               |
-| `InstructionGroup` | Titled instruction section                     | `title`, `position`                                       | → `Recipe`, `steps`                               | Via recipe                                                        | Index `[recipeId, position]`                                                               | Cascades steps                                                  |
-| `InstructionStep`  | One numbered step                              | `text`, `position`                                        | → `InstructionGroup`                              | Via group                                                         | Index `[groupId, position]`                                                                | —                                                               |
+| Model              | Purpose                                        | Key fields                                                                | Relationships                                     | Ownership / lifecycle                                             | Constraints                                                                                | Delete behaviour                                                |
+| ------------------ | ---------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| `User`             | An account                                     | `email`, `passwordHash`, `displayName`, `emailVerifiedAt`                 | `sessions`, `memberships`                         | —                                                                 | `email` unique                                                                             | Deleting cascades sessions and memberships                      |
+| `Session`          | Server-side session                            | `tokenHash` (SHA-256 of the cookie value), `expiresAt`                    | → `User`                                          | Expiry checked on read in `apps/foodblog/src/lib/auth/session.ts` | `tokenHash` unique; indexed on `userId`, `expiresAt`                                       | Cascades from `User`. **No background cleanup of expired rows** |
+| `Blog`             | One hosted food blog                           | `name`, `subdomain`, `description`, `authorName`, `logoUrl`, `brandColor` | `members`, `recipes`                              | Access via `BlogMember`                                           | `subdomain` unique globally                                                                | Cascades members and recipes                                    |
+| `BlogMember`       | User ↔ blog join with a role                   | `role` (`OWNER` \| `EDITOR`)                                              | → `User`, → `Blog`                                | The only ownership record                                         | `@@unique([blogId, userId])`                                                               | Cascades from either side                                       |
+| `Recipe`           | A recipe                                       | See [§1](#recipe-content-model)                                           | → `Blog`, `ingredientGroups`, `instructionGroups` | Owned via `blogId`                                                | `@@unique([blogId, slug])`; indexes `[blogId, status, publishedAt]`, `[blogId, updatedAt]` | Cascades both group trees                                       |
+| `IngredientGroup`  | Titled ingredient section; `title` may be null | `title`, `position`                                                       | → `Recipe`, `ingredients`                         | Via recipe                                                        | Index `[recipeId, position]`                                                               | Cascades ingredients                                            |
+| `Ingredient`       | One ingredient line                            | `text`, `position`                                                        | → `IngredientGroup`                               | Via group                                                         | Index `[groupId, position]`                                                                | —                                                               |
+| `InstructionGroup` | Titled instruction section                     | `title`, `position`                                                       | → `Recipe`, `steps`                               | Via recipe                                                        | Index `[recipeId, position]`                                                               | Cascades steps                                                  |
+| `InstructionStep`  | One numbered step                              | `text`, `position`                                                        | → `InstructionGroup`                              | Via group                                                         | Index `[groupId, position]`                                                                | —                                                               |
 
-Enums: `BlogTheme` (`MINIMAL`, `EDITORIAL`, `WARM`), `BlogRole` (`OWNER`, `EDITOR`),
-`RecipeStatus` (`DRAFT`, `PUBLISHED`), `RecipeDifficulty` (`EASY`, `MEDIUM`, `HARD`).
+Enums: `BlogRole` (`OWNER`, `EDITOR`), `RecipeStatus` (`DRAFT`, `PUBLISHED`),
+`RecipeDifficulty` (`EASY`, `MEDIUM`, `HARD`).
 
 Ordering is stored explicitly in `position`, assigned from array index at write time, and every
 read orders by it. There is no ordering guarantee without an explicit `orderBy`.
@@ -314,7 +314,7 @@ Editor: setPreviewing(true) → <RecipePage mode="preview" recipe={localState}>
 
 ```
 GET /<subdomain>/recipes/<slug>
-  → [subdomain]/layout.tsx: getBlogBySubdomain → themeAttribute → data-theme
+  → [subdomain]/layout.tsx: getBlogBySubdomain → brandColorStyle → --site-accent
   → page.tsx: getPublishedRecipeBySlug(blog.id, slug)   # status: 'PUBLISHED' only
               ├─ null → notFound()
               └─ buildRecipeJsonLd(...) → <script type="application/ld+json">
@@ -428,13 +428,14 @@ state. _Consequence:_ it diverges from the intended MVP, which specifies a modal
 `ConfirmDialog` in `@bloghost/ui` already wraps the native `<dialog>` element and is the component
 to build on when preview moves into a modal. Status: **Planned**.
 
-**Themes are CSS custom properties, not layout.** Each of the three themes is a token block on
-`.site[data-theme='…']` in `apps/foodblog/src/styles/site.css`; the markup is byte-identical between them.
-_Why:_ strong finished defaults instead of a page builder. _Consequence:_ the platform-wide visual
-identity is genuinely shared, but the MVP goal of _no user-selectable themes_ is not met — the
-`BlogTheme` enum, `/dashboard/appearance`, and `apps/foodblog/src/components/blog/theme-picker.tsx` all still exist.
-Removing them would be a schema change plus a route deletion. Status: **Diverges — decide before
-launch**.
+**One design; the only knob is a colour.** There are no themes. `apps/foodblog/src/styles/site.css` holds a
+single token block on `.site` — serif headings over Helvetica body copy — and the one token an
+owner controls, `--site-accent`, is set as an inline style from `Blog.brandColor` by the tenant
+layout. `apps/foodblog/src/lib/blog/brand.ts` owns the palette, the hex normalisation and that style
+helper. _Why:_ strong finished defaults instead of a page builder, and one value to store instead of
+a design system per blog. _Consequence:_ anything accented on a public page must mix from
+`--site-accent` rather than hardcode a colour, and layout must never branch on owner settings.
+Status: **Implemented**.
 
 **Tenant routing has exactly one seam.** Public blogs are served from `/<subdomain>` and every
 public URL is produced by `apps/foodblog/src/lib/tenant.ts`. _Why:_ moving to real `<subdomain>.bloghost.app`
@@ -498,7 +499,7 @@ affordances only).
    `notFound()` when missing, export `generateMetadata` with a canonical from `apps/foodblog/src/lib/tenant.ts`.
 2. Add the link to `apps/foodblog/src/components/site/site-nav.tsx`.
 3. Only query published content.
-4. Styles in `apps/foodblog/src/styles/site.css`, using the `--site-*` tokens so all three themes work.
+4. Styles in `apps/foodblog/src/styles/site.css`, using the `--site-*` tokens so every blog's brand colour works.
 
 ### Add a database model
 
@@ -559,7 +560,7 @@ dependency as `"workspace:*"`, and add the package name to `transpilePackages` i
 | ------------------------------------------------------------------------------ | ----------------------- | --------------------------------------------------------------------------------- |
 | No test tooling at all — no runner, no `test` script, no test files            | Planned                 | Every change is verified by `typecheck`, `lint` and manual clicking               |
 | Preview is an in-page toggle, not a modal                                      | Planned                 | Diverges from the MVP definition                                                  |
-| Three user-selectable themes rather than one platform-wide theme               | Diverges                | Requires a product decision, then a schema migration and route removal            |
+| Logo and brand colour are the only appearance controls                         | Implemented             | Themes were removed; `apps/foodblog/src/lib/blog/brand.ts` is the seam            |
 | JSON-LD is serialised without escaping `</script>`                             | Planned (security)      | Breakout risk on published recipe pages — see [§9](#9-security-and-authorization) |
 | No image upload; hero images are external URLs rendered through a raw `<img>`  | Planned                 | No `next/image`, no domain allowlist, no size limits                              |
 | No tags or categories as first-class data                                      | Planned                 | Only the `cuisine` and `course` strings exist                                     |

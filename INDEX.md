@@ -75,7 +75,7 @@ Paths are repository-relative. Entries in **Read first** are relative to that ro
 | Domain logic       | `apps/foodblog/src/lib/`                                   | auth, blog, recipes, db, env, form, slug, tenant           | `tenant.ts`, `form.ts`                             |
 | Recipe domain      | `apps/foodblog/src/lib/recipes/`                           | queries, persistence, actions, validation, format, json-ld | `validation.ts`                                    |
 | Auth domain        | `apps/foodblog/src/lib/auth/`                              | password, session, service, guards, actions                | `session.ts`                                       |
-| Blog domain        | `apps/foodblog/src/lib/blog/`                              | queries, guards, actions, validation, themes               | `queries.ts`                                       |
+| Blog domain        | `apps/foodblog/src/lib/blog/`                              | queries, guards, actions, validation, brand                | `queries.ts`                                       |
 | Prisma schema      | `apps/foodblog/prisma/schema.prisma`                       | Single source of truth for the data model                  | whole file                                         |
 | Migrations         | `apps/foodblog/prisma/migrations/`                         | SQL history (one migration: `20260805014250_init`)         | —                                                  |
 | Seed               | `apps/foodblog/prisma/seed.ts`                             | Demo account, blog and recipes                             | —                                                  |
@@ -108,7 +108,7 @@ Paths are repository-relative. Entries in **Read first** are relative to that ro
 | Authentication                                          | `apps/foodblog/src/lib/auth/session.ts`                                      | `apps/foodblog/src/lib/auth/{password,service,guards,actions,validation}.ts`                                                                            |
 | Route protection                                        | `apps/foodblog/src/lib/blog/guards.ts`                                       | `apps/foodblog/src/lib/auth/guards.ts`                                                                                                                  |
 | Blog settings                                           | `apps/foodblog/src/app/dashboard/settings/page.tsx`                          | `apps/foodblog/src/components/blog/settings-form.tsx`, `apps/foodblog/src/lib/blog/{actions,validation}.ts`                                             |
-| Themes / appearance                                     | `apps/foodblog/src/lib/blog/themes.ts`                                       | `apps/foodblog/src/app/dashboard/appearance/page.tsx`, `apps/foodblog/src/components/blog/theme-picker.tsx`, `apps/foodblog/src/styles/site.css`        |
+| Logo and brand colour                                   | `apps/foodblog/src/lib/blog/brand.ts`                                        | `apps/foodblog/src/app/dashboard/appearance/page.tsx`, `apps/foodblog/src/components/blog/brand-color-picker.tsx`, `apps/foodblog/src/styles/site.css`  |
 | Global visual styles / tokens                           | `packages/ui/src/styles.css`                                                 | `apps/foodblog/src/app/globals.css`, `apps/foodblog/src/styles/site.css`                                                                                |
 | Validation                                              | `apps/foodblog/src/lib/recipes/validation.ts`                                | `apps/foodblog/src/lib/blog/validation.ts`, `apps/foodblog/src/lib/auth/validation.ts`, `apps/foodblog/src/lib/form.ts`                                 |
 | Public URLs and links                                   | `apps/foodblog/src/lib/tenant.ts`                                            | every `blogPath` / `blogRecipePath` call site                                                                                                           |
@@ -123,7 +123,7 @@ Use these exact words in code, UI copy and commit messages.
 
 | Term                  | Meaning in this codebase                                                                                                                    |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Blog**              | `Blog` model. One hosted food blog: name, `subdomain`, description, `authorName`, theme. One per account today                              |
+| **Blog**              | `Blog` model. One hosted food blog: name, `subdomain`, description, `authorName`, `logoUrl`, `brandColor`. One per account today            |
 | **Subdomain**         | The blog's address segment. Served at `/<subdomain>`, globally unique, reserved words blocked in `apps/foodblog/src/lib/blog/validation.ts` |
 | **Recipe**            | `Recipe` model plus its ingredient and instruction trees                                                                                    |
 | **Draft**             | `Recipe.status === 'DRAFT'`. Never returned by a public query                                                                               |
@@ -222,7 +222,7 @@ Prohibited:
 | Tags / categories                           | Partial                 | `apps/foodblog/prisma/schema.prisma`                    | Free-text `cuisine` and `course`; no model, no archive pages               |
 | Public recipe index and page                | Implemented             | `apps/foodblog/src/app/[subdomain]/`                    | Title search, print button, about page                                     |
 | SEO metadata + `Recipe` JSON-LD             | Implemented             | `apps/foodblog/src/lib/recipes/json-ld.ts`              | Escaping gap noted in [§9](#9-high-risk-areas)                             |
-| Single platform-wide visual system          | Partial                 | `apps/foodblog/src/styles/site.css`                     | Shared markup, but three user-selectable token themes                      |
+| Single platform-wide visual system          | Implemented             | `apps/foodblog/src/styles/site.css`                     | One design; an owner sets only a logo and `--site-accent`                  |
 | Custom domains                              | Planned                 | `apps/foodblog/src/app/dashboard/settings/page.tsx`     | "Coming soon" badge only                                                   |
 | Real subdomain hosting                      | Planned                 | `apps/foodblog/src/lib/tenant.ts`                       | Path-based `/<subdomain>` today; needs a middleware rewrite                |
 | Multi-author blogs                          | Blocked                 | `apps/foodblog/prisma/schema.prisma`                    | `BlogRole.EDITOR` and `userCanEditBlog()` exist but nothing enforces roles |

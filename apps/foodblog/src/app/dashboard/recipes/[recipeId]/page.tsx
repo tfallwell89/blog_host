@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 import { toRecipeDocument } from '@/components/recipe/recipe-document';
 import { RecipeEditor } from '@/components/recipe/recipe-editor';
 import { requireBlog } from '@/lib/blog/guards';
-import { themeAttribute } from '@/lib/blog/themes';
 import { getEditableRecipe } from '@/lib/recipes/queries';
 
 // The canvas is the published page, so it needs the public stylesheet too.
@@ -43,7 +42,7 @@ export default async function EditRecipePage({
       blog={{
         subdomain: blog.subdomain,
         authorName: blog.authorName,
-        theme: themeAttribute(blog.theme),
+        brandColor: blog.brandColor,
       }}
       recipeId={recipe.id}
       initialRecipe={toRecipeDocument(recipe)}

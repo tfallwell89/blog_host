@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import { emptyRecipeDocument } from '@/components/recipe/recipe-document';
 import { RecipeEditor } from '@/components/recipe/recipe-editor';
 import { requireBlog } from '@/lib/blog/guards';
-import { themeAttribute } from '@/lib/blog/themes';
 
 // The canvas is the published page, so it needs the public stylesheet too.
 import '@/styles/site.css';
@@ -21,7 +20,7 @@ export default async function NewRecipePage() {
       blog={{
         subdomain: blog.subdomain,
         authorName: blog.authorName,
-        theme: themeAttribute(blog.theme),
+        brandColor: blog.brandColor,
       }}
       initialRecipe={emptyRecipeDocument()}
       initialStatus="DRAFT"

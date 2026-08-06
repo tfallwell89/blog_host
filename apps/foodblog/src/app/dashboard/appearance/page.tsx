@@ -4,7 +4,6 @@ import Link from 'next/link';
 
 import { AppearanceForm } from '@/components/blog/appearance-form';
 import { requireBlog } from '@/lib/blog/guards';
-import { getThemeOption } from '@/lib/blog/themes';
 import { blogPath } from '@/lib/tenant';
 
 export const metadata: Metadata = {
@@ -13,7 +12,6 @@ export const metadata: Metadata = {
 
 export default async function AppearancePage() {
   const { blog } = await requireBlog();
-  const current = getThemeOption(blog.theme);
 
   return (
     <div>
@@ -21,8 +19,8 @@ export default async function AppearancePage() {
         <div>
           <h1 className="page-header__title">Appearance</h1>
           <p className="page-header__subtitle">
-            Your food blog is using the <strong>{current.label}</strong> theme. Switching themes
-            takes effect straight away and never touches your recipes.
+            Add your logo and pick the colour readers will associate with your food blog. Changes
+            take effect straight away and never touch your recipes.
           </p>
         </div>
         <div className="page-header__actions">
@@ -37,7 +35,9 @@ export default async function AppearancePage() {
 
       <Card>
         <CardContent>
-          <AppearanceForm currentTheme={blog.theme} />
+          <AppearanceForm
+            blog={{ name: blog.name, logoUrl: blog.logoUrl, brandColor: blog.brandColor }}
+          />
         </CardContent>
       </Card>
     </div>

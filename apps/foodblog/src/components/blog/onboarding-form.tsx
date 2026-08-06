@@ -3,10 +3,11 @@
 import { FormField, Input, Textarea } from '@bloghost/ui';
 import { useActionState, useState, type ChangeEvent } from 'react';
 
+import { BrandColorPicker } from '@/components/blog/brand-color-picker';
 import { FormAlert } from '@/components/form-alert';
-import { ThemePicker } from '@/components/blog/theme-picker';
 import { SubmitButton } from '@/components/submit-button';
 import { createBlogAction } from '@/lib/blog/actions';
+import { DEFAULT_BRAND_COLOR } from '@/lib/blog/brand';
 import { emptyFormState } from '@/lib/form';
 import { slugify } from '@/lib/slug';
 
@@ -100,14 +101,12 @@ export function OnboardingForm() {
         )}
       </FormField>
 
-      <div>
-        <ThemePicker defaultValue="MINIMAL" legend="Pick a design" />
-        {state.fieldErrors?.theme ? (
-          <p className="ui-field__error" role="alert">
-            {state.fieldErrors.theme}
-          </p>
-        ) : null}
-      </div>
+      <BrandColorPicker
+        defaultValue={DEFAULT_BRAND_COLOR}
+        legend="Pick your brand colour"
+        hint="This colours the links and headings on your blog. You can change it, and add a logo, in Appearance later."
+        error={state.fieldErrors?.brandColor}
+      />
 
       <SubmitButton size="lg" pendingLabel="Creating your food blog…">
         Create my food blog

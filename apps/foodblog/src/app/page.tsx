@@ -25,8 +25,8 @@ const STEPS = [
     body: 'Pick a name and a web address. We handle the hosting, the SSL and the boring parts.',
   },
   {
-    title: 'Choose a design',
-    body: 'Three finished themes made for food photography. Switch between them whenever you like.',
+    title: 'Make it yours',
+    body: 'Add your logo and pick a brand colour. The design is finished for you — no page builder.',
   },
   {
     title: 'Publish your first recipe',

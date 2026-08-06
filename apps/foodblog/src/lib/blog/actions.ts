@@ -11,7 +11,7 @@ import { blogPath } from '@/lib/tenant';
 
 import { requireBlog } from './guards';
 import { getBlogForUser, isSubdomainAvailable } from './queries';
-import { createBlogSchema, updateBlogSettingsSchema, updateThemeSchema } from './validation';
+import { createBlogSchema, updateAppearanceSchema, updateBlogSettingsSchema } from './validation';
 
 const SUBDOMAIN_TAKEN = 'That address is already taken. Try another one.';
 
@@ -31,14 +31,14 @@ export async function createBlogAction(
     name: readString(formData, 'name'),
     subdomain: readString(formData, 'subdomain'),
     description: readString(formData, 'description'),
-    theme: readString(formData, 'theme'),
+    brandColor: readString(formData, 'brandColor'),
   });
 
   if (!parsed.success) {
     return formErrorState(parsed.error, 'Please fix the highlighted fields.');
   }
 
-  const { name, subdomain, description, theme } = parsed.data;
+  const { name, subdomain, description, brandColor } = parsed.data;
 
   if (!(await isSubdomainAvailable(subdomain))) {
     return errorState(SUBDOMAIN_TAKEN, { subdomain: SUBDOMAIN_TAKEN });
@@ -50,7 +50,7 @@ export async function createBlogAction(
         name,
         subdomain,
         description,
-        theme,
+        brandColor,
         authorName: user.displayName,
         members: { create: { userId: user.id, role: 'OWNER' } },
       },
@@ -75,7 +75,6 @@ export async function updateBlogSettingsAction(
     name: readString(formData, 'name'),
     subdomain: readString(formData, 'subdomain'),
     description: readString(formData, 'description'),
-    theme: readString(formData, 'theme'),
     authorName: readString(formData, 'authorName'),
   });
 
@@ -105,21 +104,25 @@ export async function updateBlogSettingsAction(
   return successState('Your food blog settings are saved.');
 }
 
-export async function updateThemeAction(
+export async function updateAppearanceAction(
   _prevState: FormState,
   formData: FormData,
 ): Promise<FormState> {
   const { blog } = await requireBlog();
 
-  const parsed = updateThemeSchema.safeParse({ theme: readString(formData, 'theme') });
+  const parsed = updateAppearanceSchema.safeParse({
+    logoUrl: readString(formData, 'logoUrl'),
+    brandColor: readString(formData, 'brandColor'),
+  });
+
   if (!parsed.success) {
-    return formErrorState(parsed.error, 'Pick one of the available themes.');
+    return formErrorState(parsed.error, 'Please fix the highlighted fields.');
   }
 
-  await prisma.blog.update({ where: { id: blog.id }, data: { theme: parsed.data.theme } });
+  await prisma.blog.update({ where: { id: blog.id }, data: parsed.data });
 
-  revalidatePath('/dashboard/appearance');
+  revalidatePath('/dashboard', 'layout');
   revalidatePath(blogPath(blog.subdomain), 'layout');
 
-  return successState('Theme updated. Your food blog has a new look.');
+  return successState('Your food blog has a new look.');
 }

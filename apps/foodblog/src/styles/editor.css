@@ -73,6 +73,12 @@
   --editable-padding-x: 0.35rem;
   --editable-padding-y: 0.1rem;
 
+  /* A field has to read as a field before it is touched, otherwise the canvas
+     looks like a finished page that happens to be typeable. Both resting tones
+     are mixed from the blog's own border token so every theme stays in key. */
+  --editable-rest-bg: color-mix(in srgb, var(--site-border) 22%, transparent);
+  --editable-rest-border: color-mix(in srgb, var(--site-border) 70%, transparent);
+
   display: block;
   margin-block: calc(-1 * (var(--editable-padding-y) + 1px));
   margin-inline: calc(-1 * (var(--editable-padding-x) + 1px));
@@ -107,15 +113,16 @@
   min-width: 0;
   overflow: hidden;
   resize: none;
-  background-color: transparent;
+  background-color: var(--editable-rest-bg);
+  border-color: var(--editable-rest-border);
   transition:
     background-color 0.12s ease,
     border-color 0.12s ease;
 }
 
 .editable__input:hover {
-  background-color: color-mix(in srgb, var(--site-accent) 5%, transparent);
-  border-color: color-mix(in srgb, var(--site-border) 80%, transparent);
+  background-color: color-mix(in srgb, var(--site-border) 38%, transparent);
+  border-color: var(--site-border);
 }
 
 .editable__input:focus {
@@ -140,18 +147,21 @@
   font: inherit;
   color: inherit;
   cursor: pointer;
-  background-color: transparent;
-  border: 1px solid transparent;
+  background-color: var(--editable-rest-bg);
+  border: 1px solid var(--editable-rest-border);
   border-radius: var(--site-radius);
 }
 
 .editable__select:hover {
-  border-color: color-mix(in srgb, var(--site-border) 80%, transparent);
+  background-color: color-mix(in srgb, var(--site-border) 38%, transparent);
+  border-color: var(--site-border);
 }
 
 .editable__select:focus {
+  background-color: var(--site-surface);
   border-color: var(--site-accent);
   outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--site-accent) 16%, transparent);
 }
 
 .editable__error {

@@ -15,11 +15,11 @@ plugins, no hosting setup, no code.
 | ----------------- | ----------------------------------------------------------------------------------------------- |
 | Marketing site    | Landing page with the three-step story and a live preview of a real hosted blog                 |
 | Accounts          | Email + password sign up, sign in, sign out, database-backed sessions, protected dashboard      |
-| Onboarding        | Blog name, web address, description and theme — validated and unique                            |
+| Onboarding        | Blog name, web address, description and brand colour — validated and unique                     |
 | Dashboard         | Recipe counts, recent recipes, public URL, and Overview / Recipes / Appearance / Settings nav   |
 | Recipe editor     | Ingredient groups, instruction groups, reordering, timings, servings, notes, draft vs published |
 | Recipe management | Filter by draft or published, edit, view, delete with confirmation, empty states                |
-| Public food blog  | Recipe index with title search, recipe pages, about page, print button, three themes            |
+| Public food blog  | Sticky header with your logo, recipe index with title search, recipe pages, about, print button |
 | SEO               | Per-page metadata, canonical URLs, Open Graph, and `Recipe` JSON-LD on every recipe page        |
 
 Draft recipes are never served publicly, and nobody can read or edit a blog or recipe they do not
@@ -121,7 +121,7 @@ packages contain nothing that knows what a recipe is.
 | `/dashboard/recipes`            | Recipe management (with draft/published filter) |
 | `/dashboard/recipes/new`        | Recipe editor                                   |
 | `/dashboard/recipes/[recipeId]` | Recipe editor for an existing recipe            |
-| `/dashboard/appearance`         | Theme switching                                 |
+| `/dashboard/appearance`         | Logo and brand colour                           |
 | `/dashboard/settings`           | Blog name, description, address, author         |
 | `/[subdomain]`                  | Public recipe index                             |
 | `/[subdomain]/recipes/[slug]`   | Public recipe page                              |
@@ -152,9 +152,10 @@ tokens stored as SHA-256 hashes in PostgreSQL, referenced by an `httpOnly` cooki
 carries an `emailVerifiedAt` column so verification and password reset can be added without a
 migration to existing data.
 
-**Themes are data, not layout.** Each theme is a set of CSS custom properties applied through a
-`data-theme` attribute on the public blog. The markup is identical across all three, which is what
-lets the product ship strong defaults instead of a page builder.
+**One design, one colour to choose.** There are no themes. Every blog gets the same layout and the
+same type — serif headings over Helvetica — and the only visual settings an owner has are a logo and
+a brand colour. That colour arrives as a single CSS custom property, `--site-accent`, so the product
+ships strong defaults instead of a page builder.
 
 **Ownership is enforced by the query, not by a check.** Recipe reads and writes are scoped with
 `blogId` or `blog: { members: { some: { userId } } }`, so an id belonging to another tenant simply

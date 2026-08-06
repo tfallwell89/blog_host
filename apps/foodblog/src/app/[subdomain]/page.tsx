@@ -50,16 +50,22 @@ export default async function BlogHomePage({ params }: TenantParams) {
 
   const recipes = await getPublishedRecipes(blog.id);
 
-  if (recipes.length === 0) {
-    return (
-      <div>
-        <h1 className="index__title">Recipes</h1>
+  return (
+    <>
+      {/* The masthead lives here rather than in the layout: every other page
+          gets its identity from the sticky bar and leads with its own title. */}
+      <header className="site__masthead">
+        <h1 className="site__masthead-title">{blog.name}</h1>
+        <p className="site__masthead-tagline">{blog.description}</p>
+      </header>
+
+      {recipes.length === 0 ? (
         <p className="site-empty">
           {blog.authorName} has not published a recipe yet. Check back soon.
         </p>
-      </div>
-    );
-  }
-
-  return <RecipeIndex recipes={recipes.map(toIndexItem)} subdomain={blog.subdomain} />;
+      ) : (
+        <RecipeIndex recipes={recipes.map(toIndexItem)} subdomain={blog.subdomain} />
+      )}
+    </>
+  );
 }

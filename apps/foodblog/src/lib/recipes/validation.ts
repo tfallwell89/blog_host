@@ -1,18 +1,11 @@
 import { z } from 'zod';
 
+import { isHttpUrl } from '@/lib/url';
+
 export const RECIPE_STATUS_VALUES = ['DRAFT', 'PUBLISHED'] as const;
 export const RECIPE_DIFFICULTY_VALUES = ['EASY', 'MEDIUM', 'HARD'] as const;
 
 const MINUTES_IN_A_WEEK = 60 * 24 * 7;
-
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
 
 /** Empty string means "not provided" for every optional field in the editor. */
 function optionalText(max: number, tooLong: string) {

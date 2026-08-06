@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { SiteNav } from '@/components/site/site-nav';
+import { brandColorStyle } from '@/lib/blog/brand';
 import { getBlogBySubdomain } from '@/lib/blog/queries';
-import { themeAttribute } from '@/lib/blog/themes';
 import { blogPath } from '@/lib/tenant';
 
 import '@/styles/site.css';
@@ -49,17 +49,20 @@ export default async function SiteLayout({
   const home = blogPath(blog.subdomain);
 
   return (
-    <div className="site" data-theme={themeAttribute(blog.theme)}>
+    <div className="site" style={brandColorStyle(blog.brandColor)}>
       <a className="skip-link" href="#site-main">
         Skip to content
       </a>
 
-      <header className="site__header">
-        <div className="site-container">
-          <Link className="site__title" href={home}>
-            {blog.name}
+      <header className="site__bar">
+        <div className="site-container site__bar-inner">
+          <Link className="site__brand" href={home}>
+            {blog.logoUrl ? (
+              <img className="site__logo" src={blog.logoUrl} alt={blog.name} />
+            ) : (
+              <span className="site__brand-name">{blog.name}</span>
+            )}
           </Link>
-          <p className="site__tagline">{blog.description}</p>
           <SiteNav subdomain={blog.subdomain} />
         </div>
       </header>

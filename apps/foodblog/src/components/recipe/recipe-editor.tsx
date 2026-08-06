@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
+import { brandColorStyle } from '@/lib/blog/brand';
 import type { FieldErrors } from '@/lib/form';
 import { saveRecipeAction } from '@/lib/recipes/actions';
 import { slugify } from '@/lib/slug';
@@ -20,7 +21,7 @@ import { toFormValues, type RecipeDocument } from './recipe-document';
  * actually see is rendered by `RecipePage`, in edit or preview mode.
  */
 export interface RecipeEditorProps {
-  blog: { subdomain: string; authorName: string; theme: string };
+  blog: { subdomain: string; authorName: string; brandColor: string };
   initialRecipe: RecipeDocument;
   initialStatus: RecipeStatus;
   /** ISO publication timestamp, shown in the byline. */
@@ -164,7 +165,7 @@ export function RecipeEditor({
         </p>
       ) : null}
 
-      <div className="editor__canvas site" data-theme={blog.theme}>
+      <div className="editor__canvas site" style={brandColorStyle(blog.brandColor)}>
         <div className="site-container">
           {previewing ? (
             <RecipePage mode="preview" recipe={recipe} byline={byline} indexHref={indexHref} />

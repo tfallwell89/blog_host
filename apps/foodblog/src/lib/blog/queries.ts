@@ -1,4 +1,3 @@
-import type { BlogTheme } from '@prisma/client';
 import { cache } from 'react';
 
 import { prisma } from '@/lib/db';
@@ -10,7 +9,8 @@ const blogSelect = {
   subdomain: true,
   description: true,
   authorName: true,
-  theme: true,
+  logoUrl: true,
+  brandColor: true,
   createdAt: true,
 } as const;
 
@@ -20,7 +20,8 @@ export type BlogSummary = {
   subdomain: string;
   description: string;
   authorName: string;
-  theme: BlogTheme;
+  logoUrl: string | null;
+  brandColor: string;
   createdAt: Date;
 };
 

@@ -12,12 +12,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum BlogTheme {
-  MINIMAL
-  EDITORIAL
-  WARM
-}
-
 enum BlogRole {
   OWNER
   EDITOR
@@ -66,14 +60,17 @@ model Session {
 }
 
 model Blog {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
-  subdomain   String    @unique
+  subdomain   String   @unique
   description String
   authorName  String
-  theme       BlogTheme @default(MINIMAL)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  /// External http(s) image URL, like recipe photos. Null means "show the blog name".
+  logoUrl     String?
+  /// The one colour a blog owner controls, stored as an uppercase #RRGGBB hex.
+  brandColor  String   @default("#1F6F5C")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   members BlogMember[]
   recipes Recipe[]
