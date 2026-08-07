@@ -420,6 +420,8 @@
 /* ----------------------------------------------------------- DashboardShell */
 
 .ui-shell {
+  --ui-shell-content-width: 88rem;
+
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -427,14 +429,20 @@
 }
 
 .ui-shell__topbar {
+  background-color: var(--ui-color-surface);
+  border-bottom: 1px solid var(--ui-color-border);
+}
+
+.ui-shell__topbar-inner {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ui-space-3);
   align-items: center;
   justify-content: space-between;
+  width: 100%;
+  max-width: var(--ui-shell-content-width);
   padding: var(--ui-space-3) var(--ui-space-5);
-  background-color: var(--ui-color-surface);
-  border-bottom: 1px solid var(--ui-color-border);
+  margin: 0 auto;
 }
 
 .ui-shell__brand {
@@ -451,23 +459,30 @@
 }
 
 .ui-shell__body {
-  display: grid;
-  grid-template-columns: 15rem minmax(0, 1fr);
   flex: 1;
   width: 100%;
-  max-width: 88rem;
-  margin: 0 auto;
 }
 
-.ui-shell__sidebar {
-  padding: var(--ui-space-5) var(--ui-space-4);
-  border-right: 1px solid var(--ui-color-border);
+.ui-shell__navigation {
+  overflow-x: auto;
+  background-color: var(--ui-color-surface);
+  border-bottom: 1px solid var(--ui-color-border);
+}
+
+.ui-shell__navigation-inner {
+  display: flex;
+  gap: var(--ui-space-4);
+  align-items: center;
+  width: 100%;
+  max-width: var(--ui-shell-content-width);
+  padding: var(--ui-space-2) var(--ui-space-5);
+  margin: 0 auto;
 }
 
 .ui-shell__nav {
   display: flex;
-  flex-direction: column;
   gap: var(--ui-space-1);
+  min-width: max-content;
 }
 
 .ui-shell__nav-link {
@@ -494,33 +509,38 @@
 }
 
 .ui-shell__main {
+  width: 100%;
+  max-width: var(--ui-shell-content-width);
   min-width: 0;
   padding: var(--ui-space-6) var(--ui-space-5) var(--ui-space-8);
+  margin: 0 auto;
 }
 
-.ui-shell__sidebar-footer {
-  margin-top: var(--ui-space-5);
+.ui-shell__navigation-footer {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.ui-shell__navigation-footer br {
+  display: none;
 }
 
 @media (max-width: 48rem) {
-  .ui-shell__body {
-    display: block;
+  .ui-shell__topbar-inner {
+    padding-inline: var(--ui-space-4);
   }
 
-  .ui-shell__sidebar {
-    padding: var(--ui-space-3) var(--ui-space-4);
-    overflow-x: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--ui-color-border);
+  .ui-shell__navigation-inner {
+    width: max-content;
+    min-width: 100%;
+    padding-inline: var(--ui-space-4);
   }
 
   .ui-shell__nav {
-    flex-direction: row;
     gap: var(--ui-space-2);
-    min-width: max-content;
   }
 
-  .ui-shell__sidebar-footer {
+  .ui-shell__navigation-footer {
     display: none;
   }
 

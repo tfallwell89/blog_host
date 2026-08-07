@@ -271,43 +271,47 @@ export function RecipeEditor({
           !previewing && !splitting && 'editor__layout--editing',
         )}
       >
-        <div className="editor__canvas site" style={brandColorStyle(blog.brandColor)}>
-          <div className="site-container">
-            {previewing ? (
-              <RecipePage
-                mode="preview"
-                recipe={recipe}
-                byline={byline}
-                indexHref={indexHref}
-                related={relatedGroups}
-              />
-            ) : (
-              <RecipePage
-                mode="edit"
-                recipe={recipe}
-                byline={byline}
-                indexHref={indexHref}
-                edit={{
-                  onChange: handleChange,
-                  fieldErrors,
-                  slugPrefix: `${indexHref}/recipes/`,
-                  photoUpload: (
-                    <ImageUploadButton
-                      buildPathname={heroImagePathname}
-                      onUploaded={(blob) => handleChange('featuredImageUrl', blob.url)}
-                      label={recipe.featuredImageUrl ? 'Replace photo' : 'Upload photo'}
-                      disabled={pending}
-                    />
-                  ),
-                }}
-              />
-            )}
+        <div className="editor__edit-column">
+          {splitting ? <h2 className="editor__column-title">Recipe editor</h2> : null}
+
+          <div className="editor__canvas site" style={brandColorStyle(blog.brandColor)}>
+            <div className="site-container">
+              {previewing ? (
+                <RecipePage
+                  mode="preview"
+                  recipe={recipe}
+                  byline={byline}
+                  indexHref={indexHref}
+                  related={relatedGroups}
+                />
+              ) : (
+                <RecipePage
+                  mode="edit"
+                  recipe={recipe}
+                  byline={byline}
+                  indexHref={indexHref}
+                  edit={{
+                    onChange: handleChange,
+                    fieldErrors,
+                    slugPrefix: `${indexHref}/recipes/`,
+                    photoUpload: (
+                      <ImageUploadButton
+                        buildPathname={heroImagePathname}
+                        onUploaded={(blob) => handleChange('featuredImageUrl', blob.url)}
+                        label={recipe.featuredImageUrl ? 'Replace photo' : 'Upload photo'}
+                        disabled={pending}
+                      />
+                    ),
+                  }}
+                />
+              )}
+            </div>
           </div>
         </div>
 
         {splitting ? (
           <aside className="editor__preview" aria-labelledby="live-preview-heading">
-            <h2 className="editor__preview-title" id="live-preview-heading">
+            <h2 className="editor__column-title" id="live-preview-heading">
               Live preview
             </h2>
 

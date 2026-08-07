@@ -120,6 +120,16 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
+.editor__edit-column {
+  min-width: 0;
+}
+
+.editor__layout--split .editor__edit-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+}
+
 /*
  * Both columns are now narrower than the window, so each one hands the recipe
  * its own width to lay out against — `container-name: site` is what the
@@ -143,7 +153,7 @@
   max-height: calc(100vh - 6rem);
 }
 
-.editor__preview-title {
+.editor__column-title {
   margin: 0;
   font-family: var(--ui-font-sans);
   font-size: 0.6875rem;

@@ -8,7 +8,7 @@ export interface NavLinkStyleOptions {
 }
 
 /**
- * Class names for a sidebar navigation item. Exported so the application can
+ * Class names for a dashboard navigation item. Exported so the application can
  * apply them to its own router link component.
  */
 export function navLinkClassName({ active = false, className }: NavLinkStyleOptions = {}): string {
@@ -37,16 +37,22 @@ export function DashboardShell({
   return (
     <div className="ui-shell">
       <header className="ui-shell__topbar">
-        <div className="ui-shell__brand">{brand}</div>
-        {topbarActions ? <div className="ui-shell__topbar-actions">{topbarActions}</div> : null}
+        <div className="ui-shell__topbar-inner">
+          <div className="ui-shell__brand">{brand}</div>
+          {topbarActions ? <div className="ui-shell__topbar-actions">{topbarActions}</div> : null}
+        </div>
       </header>
-      <div className="ui-shell__body">
-        <aside className="ui-shell__sidebar">
+      <div className="ui-shell__navigation">
+        <div className="ui-shell__navigation-inner">
           <nav className="ui-shell__nav" aria-label={navLabel}>
             {nav}
           </nav>
-          {sidebarFooter ? <div className="ui-shell__sidebar-footer">{sidebarFooter}</div> : null}
-        </aside>
+          {sidebarFooter ? (
+            <div className="ui-shell__navigation-footer">{sidebarFooter}</div>
+          ) : null}
+        </div>
+      </div>
+      <div className="ui-shell__body">
         <main className="ui-shell__main">{children}</main>
       </div>
     </div>
