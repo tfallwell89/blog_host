@@ -1,9 +1,24 @@
 'use client';
 
-import { Button, Card, CardContent, CardHeader } from '@bloghost/ui';
+import { Button, Card, CardContent, CardHeader, Input, Select } from '@bloghost/ui';
 import type { PutBlobResult } from '@vercel/blob';
 import { upload } from '@vercel/blob/client';
 import { useId, useState } from 'react';
+
+import {
+  MAX_UPLOAD_BYTES,
+  RECIPE_IMAGE_PURPOSES,
+  SUPPORTED_CONTENT_TYPES,
+  buildBlogLogoPathname,
+  buildRecipeImagePathname,
+  parseUploadPathname,
+  type RecipeImagePurpose,
+} from '@/lib/uploads/blob-pathname';
+
+const PURPOSE_OPTIONS = RECIPE_IMAGE_PURPOSES.map((purpose) => ({
+  value: purpose,
+  label: purpose,
+}));
 
 /**
  * Temporary diagnostic page for browser-to-Vercel-Blob uploads.
@@ -12,29 +27,65 @@ import { useId, useState } from 'react';
  * recipe editor. Delete it once image uploads ship for real.
  */
 export default function UploadTestPage() {
+  const recipeIdInputId = useId();
+  const draftIdInputId = useId();
+  const blogIdInputId = useId();
+  const purposeInputId = useId();
   const fileInputId = useId();
+
+  const [recipeId, setRecipeId] = useState('');
+  const [draftId, setDraftId] = useState('');
+  const [blogId, setBlogId] = useState('');
+  const [purpose, setPurpose] = useState<RecipeImagePurpose>('hero');
   const [file, setFile] = useState<File | null>(null);
+
   const [isUploading, setIsUploading] = useState(false);
   const [percentage, setPercentage] = useState(0);
   const [blob, setBlob] = useState<PutBlobResult | null>(null);
+  const [assetId, setAssetId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  function resetResult() {
+    setBlob(null);
+    setAssetId(null);
+    setError(null);
+  }
+
   async function handleUpload() {
-    if (!file) return;
+    if (!file) {
+      setError('Choose an image first.');
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError(`${formatBytes(file.size)} is over the ${formatBytes(MAX_UPLOAD_BYTES)} limit.`);
+      return;
+    }
+
+    let target: string;
+
+    try {
+      target = buildTargetPathname({ recipeId, draftId, blogId, purpose, file });
+    } catch (buildError) {
+      setError(buildError instanceof Error ? buildError.message : String(buildError));
+      return;
+    }
 
     setIsUploading(true);
     setPercentage(0);
     setBlob(null);
+    setAssetId(null);
     setError(null);
 
     try {
-      const result = await upload(`recipe-images/test/${file.name}`, file, {
+      const result = await upload(target, file, {
         access: 'public',
         handleUploadUrl: '/api/uploads',
         onUploadProgress: (progress) => setPercentage(progress.percentage),
       });
 
       setBlob(result);
+      setAssetId(parseUploadPathname(target).assetId);
     } catch (uploadError) {
       setError(describeUploadError(uploadError));
     } finally {
@@ -47,15 +98,88 @@ export default function UploadTestPage() {
       <div>
         <h1>Blob upload test</h1>
         <p className="muted">
-          Uploads one image straight from your browser to Vercel Blob under{' '}
-          <code>recipe-images/test/</code>. Nothing is saved to the database.
+          Uploads one image straight from your browser to Vercel Blob using the canonical pathname
+          layout. Nothing is saved to the database.
         </p>
       </div>
 
       <Card>
-        <CardHeader title="Pick an image" description="JPEG, PNG, WebP or AVIF, up to 20 MB." />
+        <CardHeader
+          title="Build a pathname and upload"
+          description="Fill in exactly one id. JPEG, PNG, WebP or AVIF, up to 20 MB."
+        />
         <CardContent>
           <div className="stack">
+            <div>
+              <label className="text-sm" htmlFor={recipeIdInputId}>
+                recipeId <span className="muted">→ recipes/&#123;recipeId&#125;/…</span>
+              </label>
+              <Input
+                id={recipeIdInputId}
+                value={recipeId}
+                onChange={(event) => {
+                  setRecipeId(event.target.value);
+                  resetResult();
+                }}
+                placeholder="clx9recipe456"
+                spellCheck={false}
+                autoComplete="off"
+                disabled={isUploading}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm" htmlFor={draftIdInputId}>
+                draftId <span className="muted">→ drafts/&#123;draftId&#125;/…</span>
+              </label>
+              <Input
+                id={draftIdInputId}
+                value={draftId}
+                onChange={(event) => {
+                  setDraftId(event.target.value);
+                  resetResult();
+                }}
+                placeholder="01J5Y7ZKX8"
+                spellCheck={false}
+                autoComplete="off"
+                disabled={isUploading}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm" htmlFor={blogIdInputId}>
+                blogId <span className="muted">→ blogs/&#123;blogId&#125;/logo/…</span>
+              </label>
+              <Input
+                id={blogIdInputId}
+                value={blogId}
+                onChange={(event) => {
+                  setBlogId(event.target.value);
+                  resetResult();
+                }}
+                placeholder="clx9blog123"
+                spellCheck={false}
+                autoComplete="off"
+                disabled={isUploading}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm" htmlFor={purposeInputId}>
+                purpose <span className="muted">(ignored for blogId, which is always logo)</span>
+              </label>
+              <Select
+                id={purposeInputId}
+                options={PURPOSE_OPTIONS}
+                value={purpose}
+                onChange={(event) => {
+                  setPurpose(event.target.value as RecipeImagePurpose);
+                  resetResult();
+                }}
+                disabled={isUploading || blogId.trim().length > 0}
+              />
+            </div>
+
             <div>
               <label className="text-sm" htmlFor={fileInputId}>
                 Image file
@@ -64,12 +188,11 @@ export default function UploadTestPage() {
               <input
                 id={fileInputId}
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/avif"
+                accept={SUPPORTED_CONTENT_TYPES.join(',')}
                 disabled={isUploading}
                 onChange={(event) => {
                   setFile(event.target.files?.[0] ?? null);
-                  setBlob(null);
-                  setError(null);
+                  resetResult();
                 }}
               />
             </div>
@@ -120,27 +243,27 @@ export default function UploadTestPage() {
 
               <dl className="text-sm stack">
                 <div>
-                  <dt className="muted">url</dt>
-                  <dd>
-                    <code>{blob.url}</code>
-                  </dd>
-                </div>
-                <div>
                   <dt className="muted">pathname</dt>
                   <dd>
                     <code>{blob.pathname}</code>
                   </dd>
                 </div>
                 <div>
-                  <dt className="muted">contentType</dt>
+                  <dt className="muted">assetId</dt>
                   <dd>
-                    <code>{blob.contentType}</code>
+                    <code>{assetId}</code>
                   </dd>
                 </div>
                 <div>
-                  <dt className="muted">downloadUrl</dt>
+                  <dt className="muted">url</dt>
                   <dd>
-                    <code>{blob.downloadUrl}</code>
+                    <code>{blob.url}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="muted">contentType</dt>
+                  <dd>
+                    <code>{blob.contentType}</code>
                   </dd>
                 </div>
               </dl>
@@ -154,6 +277,56 @@ export default function UploadTestPage() {
       ) : null}
     </main>
   );
+}
+
+interface BuildTargetOptions {
+  recipeId: string;
+  draftId: string;
+  blogId: string;
+  purpose: RecipeImagePurpose;
+  file: File;
+}
+
+/**
+ * Routes the three id fields onto the matching helper. The helpers own every
+ * rule about supported types and identifiers, so this only has to reject the
+ * ambiguity the form itself introduces.
+ */
+function buildTargetPathname({
+  recipeId,
+  draftId,
+  blogId,
+  purpose,
+  file,
+}: BuildTargetOptions): string {
+  const supplied = (
+    [
+      ['recipeId', recipeId.trim()],
+      ['draftId', draftId.trim()],
+      ['blogId', blogId.trim()],
+    ] as const
+  ).filter(([, value]) => value.length > 0);
+
+  if (supplied.length === 0) {
+    throw new Error('Enter exactly one of recipeId, draftId or blogId.');
+  }
+
+  if (supplied.length > 1) {
+    throw new Error(
+      `Enter only one id — received ${supplied.map(([name]) => name).join(' and ')}.`,
+    );
+  }
+
+  if (blogId.trim()) {
+    return buildBlogLogoPathname({ blogId, contentType: file.type });
+  }
+
+  return buildRecipeImagePathname({
+    recipeId: recipeId.trim() || undefined,
+    draftId: draftId.trim() || undefined,
+    purpose,
+    contentType: file.type,
+  });
 }
 
 /**

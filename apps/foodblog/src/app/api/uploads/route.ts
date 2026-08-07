@@ -2,10 +2,12 @@ import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
 
 import { getCurrentUser } from '@/lib/auth';
-
-const ALLOWED_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
-const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
-const PATHNAME_PREFIX = 'recipe-images/';
+import {
+  MAX_UPLOAD_BYTES,
+  SUPPORTED_CONTENT_TYPES,
+  UploadPathnameError,
+  parseUploadPathname,
+} from '@/lib/uploads/blob-pathname';
 
 /** Lets the handler below map an authorization failure onto a real status code. */
 class UploadRejected extends Error {
@@ -45,18 +47,23 @@ export async function POST(request: Request): Promise<NextResponse> {
           throw new UploadRejected('You must be signed in to upload images.', 401);
         }
 
-        if (!pathname.startsWith(PATHNAME_PREFIX)) {
-          throw new UploadRejected(
-            `Uploads must be stored under "${PATHNAME_PREFIX}" (received "${pathname}").`,
-            400,
-          );
-        }
+        // The token authorizes exactly one pathname, so this is the only place
+        // the canonical layout can be enforced.
+        const asset = parseUploadPathname(pathname);
 
         return {
-          allowedContentTypes: ALLOWED_CONTENT_TYPES,
+          allowedContentTypes: [...SUPPORTED_CONTENT_TYPES],
           maximumSizeInBytes: MAX_UPLOAD_BYTES,
-          addRandomSuffix: true,
-          tokenPayload: JSON.stringify({ userId: user.id }),
+          // The pathname already carries a uuid, and every upload mints a new
+          // one, so nothing needs a suffix and nothing can collide.
+          addRandomSuffix: false,
+          tokenPayload: JSON.stringify({
+            userId: user.id,
+            scope: asset.scope,
+            ownerId: asset.ownerId,
+            purpose: asset.purpose,
+            assetId: asset.assetId,
+          }),
         };
       },
       onUploadCompleted: async ({ blob }) => {
@@ -67,6 +74,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof UploadPathnameError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     const status = error instanceof UploadRejected ? error.status : 500;
     const message =
       error instanceof Error ? error.message : 'Could not authorize the upload request.';
