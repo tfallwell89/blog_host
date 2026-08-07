@@ -197,6 +197,7 @@ function RecipeHeader({ recipe, byline, edit }: SectionProps & { byline: RecipeB
             label="Short description"
             placeholder="Golden chicken thighs in a glossy lemon and garlic pan sauce."
             error={edit.fieldErrors?.description}
+            minRows={2}
           />
         ) : (
           recipe.description
@@ -368,6 +369,7 @@ function RecipeIntroduction({ recipe, edit }: SectionProps) {
         label="Introduction"
         placeholder="This is the dinner I make when the week has been long…"
         error={edit.fieldErrors?.introduction}
+        minRows={3}
       />
     </div>
   );
@@ -551,6 +553,7 @@ function RecipeGroups({
                   placeholder={labels.itemPlaceholder}
                   error={edit.fieldErrors?.[`${field}.${groupIndex}.${itemsKey}.${itemIndex}.text`]}
                   singleLine={!ordered}
+                  minRows={ordered ? 2 : 1}
                   onEnter={() => addItem(groupIndex, itemIndex + 1)}
                 />
 

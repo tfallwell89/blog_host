@@ -24,6 +24,8 @@ export interface EditableTextProps {
   fieldId?: string;
   /** Collapses newlines, so headings and list lines stay single-line. */
   singleLine?: boolean;
+  /** Minimum visible lines before the field grows with its content. */
+  minRows?: number;
   /** Enter splits the document here instead of committing the field. */
   onEnter?: () => void;
 }
@@ -37,6 +39,7 @@ export function EditableText({
   error,
   fieldId,
   singleLine = false,
+  minRows = 1,
   onEnter,
 }: EditableTextProps) {
   const errorId = fieldId && error ? `${fieldId}-error` : undefined;
@@ -62,7 +65,7 @@ export function EditableText({
         <textarea
           className="editable__input"
           data-field-id={fieldId}
-          rows={1}
+          rows={singleLine ? 1 : minRows}
           value={value}
           placeholder={placeholder}
           aria-label={label}
