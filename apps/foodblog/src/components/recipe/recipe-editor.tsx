@@ -4,14 +4,16 @@ import { Badge, Button, buttonClassName, cn } from '@bloghost/ui';
 import type { RecipeStatus } from '@prisma/client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 
+import { ImageUploadButton } from '@/components/uploads/image-upload-button';
 import { brandColorStyle } from '@/lib/blog/brand';
 import type { FieldErrors } from '@/lib/form';
 import { saveRecipeAction } from '@/lib/recipes/actions';
 import { RELATED_RECIPES_PER_GROUP } from '@/lib/recipes/format';
 import { slugify } from '@/lib/slug';
 import { blogPath, blogRecipePath } from '@/lib/tenant';
+import { buildRecipeImagePathname } from '@/lib/uploads/blob-pathname';
 
 import { GroupPanel, type EditorGroup } from './group-panel';
 import { groupNameKey, toFormValues, type RecipeDocument } from './recipe-document';
@@ -58,7 +60,23 @@ export function RecipeEditor({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors | undefined>(undefined);
   const [pending, startTransition] = useTransition();
 
+  /**
+   * A recipe that has never been saved has no id to file images under, so it
+   * borrows a draft id. It is created on first upload and kept for the rest of
+   * the session, which keeps every image from one sitting together.
+   */
+  const draftIdRef = useRef<string | null>(null);
+
   const isPublished = status === 'PUBLISHED';
+
+  function heroImagePathname(contentType: string): string {
+    if (recipeId) {
+      return buildRecipeImagePathname({ recipeId, purpose: 'hero', contentType });
+    }
+
+    draftIdRef.current ??= crypto.randomUUID();
+    return buildRecipeImagePathname({ draftId: draftIdRef.current, purpose: 'hero', contentType });
+  }
 
   function handleChange<K extends keyof RecipeDocument>(field: K, value: RecipeDocument[K]) {
     if (field === 'slug') setSlugEdited(true);
@@ -221,6 +239,14 @@ export function RecipeEditor({
                   onChange: handleChange,
                   fieldErrors,
                   slugPrefix: `${indexHref}/recipes/`,
+                  photoUpload: (
+                    <ImageUploadButton
+                      buildPathname={heroImagePathname}
+                      onUploaded={(blob) => handleChange('featuredImageUrl', blob.url)}
+                      label={recipe.featuredImageUrl ? 'Replace photo' : 'Upload photo'}
+                      disabled={pending}
+                    />
+                  ),
                 }}
               />
             )}

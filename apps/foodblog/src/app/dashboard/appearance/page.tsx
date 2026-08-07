@@ -36,7 +36,12 @@ export default async function AppearancePage() {
       <Card>
         <CardContent>
           <AppearanceForm
-            blog={{ name: blog.name, logoUrl: blog.logoUrl, brandColor: blog.brandColor }}
+            blog={{
+              id: blog.id,
+              name: blog.name,
+              logoUrl: blog.logoUrl,
+              brandColor: blog.brandColor,
+            }}
           />
         </CardContent>
       </Card>

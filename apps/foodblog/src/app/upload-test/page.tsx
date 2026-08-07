@@ -1,14 +1,12 @@
 'use client';
 
-import { Button, Card, CardContent, CardHeader, Input, Select } from '@bloghost/ui';
+import { Card, CardContent, CardHeader, Input, Select } from '@bloghost/ui';
 import type { PutBlobResult } from '@vercel/blob';
-import { upload } from '@vercel/blob/client';
 import { useId, useState } from 'react';
 
+import { ImageUploadButton } from '@/components/uploads/image-upload-button';
 import {
-  MAX_UPLOAD_BYTES,
   RECIPE_IMAGE_PURPOSES,
-  SUPPORTED_CONTENT_TYPES,
   buildBlogLogoPathname,
   buildRecipeImagePathname,
   parseUploadPathname,
@@ -23,75 +21,26 @@ const PURPOSE_OPTIONS = RECIPE_IMAGE_PURPOSES.map((purpose) => ({
 /**
  * Temporary diagnostic page for browser-to-Vercel-Blob uploads.
  *
- * Nothing here is wired into the product: no database writes, no reuse of the
- * recipe editor. Delete it once image uploads ship for real.
+ * The real flows live in the recipe editor and the appearance form; this only
+ * exists to exercise a pathname by hand. Delete it once uploads are trusted.
  */
 export default function UploadTestPage() {
   const recipeIdInputId = useId();
   const draftIdInputId = useId();
   const blogIdInputId = useId();
   const purposeInputId = useId();
-  const fileInputId = useId();
 
   const [recipeId, setRecipeId] = useState('');
   const [draftId, setDraftId] = useState('');
   const [blogId, setBlogId] = useState('');
   const [purpose, setPurpose] = useState<RecipeImagePurpose>('hero');
-  const [file, setFile] = useState<File | null>(null);
-
-  const [isUploading, setIsUploading] = useState(false);
-  const [percentage, setPercentage] = useState(0);
   const [blob, setBlob] = useState<PutBlobResult | null>(null);
-  const [assetId, setAssetId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  function resetResult() {
-    setBlob(null);
-    setAssetId(null);
-    setError(null);
+  function buildPathname(contentType: string): string {
+    return buildTargetPathname({ recipeId, draftId, blogId, purpose, contentType });
   }
 
-  async function handleUpload() {
-    if (!file) {
-      setError('Choose an image first.');
-      return;
-    }
-
-    if (file.size > MAX_UPLOAD_BYTES) {
-      setError(`${formatBytes(file.size)} is over the ${formatBytes(MAX_UPLOAD_BYTES)} limit.`);
-      return;
-    }
-
-    let target: string;
-
-    try {
-      target = buildTargetPathname({ recipeId, draftId, blogId, purpose, file });
-    } catch (buildError) {
-      setError(buildError instanceof Error ? buildError.message : String(buildError));
-      return;
-    }
-
-    setIsUploading(true);
-    setPercentage(0);
-    setBlob(null);
-    setAssetId(null);
-    setError(null);
-
-    try {
-      const result = await upload(target, file, {
-        access: 'public',
-        handleUploadUrl: '/api/uploads',
-        onUploadProgress: (progress) => setPercentage(progress.percentage),
-      });
-
-      setBlob(result);
-      setAssetId(parseUploadPathname(target).assetId);
-    } catch (uploadError) {
-      setError(describeUploadError(uploadError));
-    } finally {
-      setIsUploading(false);
-    }
-  }
+  const assetId = blob ? parseUploadPathname(blob.pathname).assetId : null;
 
   return (
     <main className="page page--narrow stack stack--lg" style={{ paddingBlock: '3rem' }}>
@@ -117,14 +66,10 @@ export default function UploadTestPage() {
               <Input
                 id={recipeIdInputId}
                 value={recipeId}
-                onChange={(event) => {
-                  setRecipeId(event.target.value);
-                  resetResult();
-                }}
+                onChange={(event) => setRecipeId(event.target.value)}
                 placeholder="clx9recipe456"
                 spellCheck={false}
                 autoComplete="off"
-                disabled={isUploading}
               />
             </div>
 
@@ -135,14 +80,10 @@ export default function UploadTestPage() {
               <Input
                 id={draftIdInputId}
                 value={draftId}
-                onChange={(event) => {
-                  setDraftId(event.target.value);
-                  resetResult();
-                }}
+                onChange={(event) => setDraftId(event.target.value)}
                 placeholder="01J5Y7ZKX8"
                 spellCheck={false}
                 autoComplete="off"
-                disabled={isUploading}
               />
             </div>
 
@@ -153,14 +94,10 @@ export default function UploadTestPage() {
               <Input
                 id={blogIdInputId}
                 value={blogId}
-                onChange={(event) => {
-                  setBlogId(event.target.value);
-                  resetResult();
-                }}
+                onChange={(event) => setBlogId(event.target.value)}
                 placeholder="clx9blog123"
                 spellCheck={false}
                 autoComplete="off"
-                disabled={isUploading}
               />
             </div>
 
@@ -172,54 +109,16 @@ export default function UploadTestPage() {
                 id={purposeInputId}
                 options={PURPOSE_OPTIONS}
                 value={purpose}
-                onChange={(event) => {
-                  setPurpose(event.target.value as RecipeImagePurpose);
-                  resetResult();
-                }}
-                disabled={isUploading || blogId.trim().length > 0}
+                onChange={(event) => setPurpose(event.target.value as RecipeImagePurpose)}
+                disabled={blogId.trim().length > 0}
               />
             </div>
 
-            <div>
-              <label className="text-sm" htmlFor={fileInputId}>
-                Image file
-              </label>
-              <br />
-              <input
-                id={fileInputId}
-                type="file"
-                accept={SUPPORTED_CONTENT_TYPES.join(',')}
-                disabled={isUploading}
-                onChange={(event) => {
-                  setFile(event.target.files?.[0] ?? null);
-                  resetResult();
-                }}
-              />
-            </div>
-
-            <div className="row">
-              <Button onClick={handleUpload} disabled={!file || isUploading}>
-                {isUploading ? 'Uploading…' : 'Upload image'}
-              </Button>
-              {file ? (
-                <span className="muted text-sm">
-                  {file.name} · {formatBytes(file.size)} · {file.type || 'unknown type'}
-                </span>
-              ) : null}
-            </div>
-
-            {isUploading ? (
-              <div className="stack">
-                <progress max={100} value={percentage} />
-                <span className="muted text-sm">{Math.round(percentage)}% uploaded</span>
-              </div>
-            ) : null}
-
-            {error ? (
-              <p className="alert alert--error" role="alert">
-                {error}
-              </p>
-            ) : null}
+            <ImageUploadButton
+              buildPathname={buildPathname}
+              onUploaded={setBlob}
+              label="Choose an image and upload"
+            />
           </div>
         </CardContent>
       </Card>
@@ -255,12 +154,6 @@ export default function UploadTestPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="muted">url</dt>
-                  <dd>
-                    <code>{blob.url}</code>
-                  </dd>
-                </div>
-                <div>
                   <dt className="muted">contentType</dt>
                   <dd>
                     <code>{blob.contentType}</code>
@@ -284,7 +177,7 @@ interface BuildTargetOptions {
   draftId: string;
   blogId: string;
   purpose: RecipeImagePurpose;
-  file: File;
+  contentType: string;
 }
 
 /**
@@ -297,7 +190,7 @@ function buildTargetPathname({
   draftId,
   blogId,
   purpose,
-  file,
+  contentType,
 }: BuildTargetOptions): string {
   const supplied = (
     [
@@ -318,33 +211,13 @@ function buildTargetPathname({
   }
 
   if (blogId.trim()) {
-    return buildBlogLogoPathname({ blogId, contentType: file.type });
+    return buildBlogLogoPathname({ blogId, contentType });
   }
 
   return buildRecipeImagePathname({
     recipeId: recipeId.trim() || undefined,
     draftId: draftId.trim() || undefined,
     purpose,
-    contentType: file.type,
+    contentType,
   });
-}
-
-/**
- * The Blob client collapses any non-2xx response from `/api/uploads` into one
- * generic message, so point at the route instead of repeating a dead end.
- */
-function describeUploadError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-
-  if (/retrieve the client token/i.test(message)) {
-    return `${message} — /api/uploads refused to authorize this upload. Check that you are signed in and look at the server logs for the reason.`;
-  }
-
-  return message;
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

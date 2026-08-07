@@ -6,11 +6,14 @@ import { useActionState, useState } from 'react';
 import { BrandColorPicker } from '@/components/blog/brand-color-picker';
 import { FormAlert } from '@/components/form-alert';
 import { SubmitButton } from '@/components/submit-button';
+import { ImageUploadButton } from '@/components/uploads/image-upload-button';
 import { updateAppearanceAction } from '@/lib/blog/actions';
 import { emptyFormState } from '@/lib/form';
+import { buildBlogLogoPathname } from '@/lib/uploads/blob-pathname';
 
 export interface AppearanceFormProps {
   blog: {
+    id: string;
     name: string;
     logoUrl: string | null;
     brandColor: string;
@@ -30,7 +33,7 @@ export function AppearanceForm({ blog }: AppearanceFormProps) {
       <FormField
         id="logoUrl"
         label="Logo"
-        hint="Paste a link to your logo image. It replaces your blog name in the header, so a wide image works best. Leave it empty to show the name instead."
+        hint="Upload your logo, or paste a link to one. It replaces your blog name in the header, so a wide image works best. Leave it empty to show the name instead."
         error={state.fieldErrors?.logoUrl}
       >
         {({ id, describedBy, invalid }) => (
@@ -47,6 +50,14 @@ export function AppearanceForm({ blog }: AppearanceFormProps) {
               aria-describedby={describedBy}
               invalid={invalid}
             />
+            <ImageUploadButton
+              buildPathname={(contentType) =>
+                buildBlogLogoPathname({ blogId: blog.id, contentType })
+              }
+              onUploaded={(blob) => setLogoUrl(blob.url)}
+              label={trimmedLogo ? 'Replace logo' : 'Upload logo'}
+            />
+
             <div className="logo-preview">
               {trimmedLogo ? (
                 <img className="logo-preview__image" src={trimmedLogo} alt={`${blog.name} logo`} />

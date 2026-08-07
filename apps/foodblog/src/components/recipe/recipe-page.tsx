@@ -1,6 +1,6 @@
 import { cn } from '@bloghost/ui';
 import Link from 'next/link';
-import type { DragEvent } from 'react';
+import type { DragEvent, ReactNode } from 'react';
 
 import { PrintButton } from '@/components/site/print-button';
 import { Prose } from '@/components/site/prose';
@@ -69,6 +69,12 @@ export interface RecipeEditContext {
   fieldErrors?: FieldErrors;
   /** Reader-facing prefix of the recipe address, e.g. `/kitchen/recipes/`. */
   slugPrefix: string;
+  /**
+   * The photo uploader, rendered beside the image field. It arrives as a node
+   * rather than being imported here so a published recipe never ships the
+   * upload client to readers.
+   */
+  photoUpload?: ReactNode;
 }
 
 interface RecipePageBaseProps {
@@ -272,7 +278,11 @@ function RecipePhotoField({ recipe, edit }: { recipe: RecipeDocument; edit: Reci
               ◲
             </span>
             <p className="recipe-photo__prompt">Photo of the finished dish</p>
-            <p className="recipe-photo__hint">Drop an image link here, or paste one below.</p>
+            <p className="recipe-photo__hint">
+              {edit.photoUpload
+                ? 'Upload a photo below, drop an image link here, or paste one in.'
+                : 'Drop an image link here, or paste one below.'}
+            </p>
           </div>
         )}
       </div>
@@ -297,6 +307,8 @@ function RecipePhotoField({ recipe, edit }: { recipe: RecipeDocument; edit: Reci
           </CanvasControl>
         ) : null}
       </div>
+
+      {edit.photoUpload}
     </div>
   );
 }
