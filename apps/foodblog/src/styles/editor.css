@@ -55,7 +55,7 @@
   color: var(--ui-color-text-muted);
 }
 
-/* Edit or split view: which arrangement the canvas is in, not what it can do,
+/* Full or split view: which arrangement the canvas is in, not what it can do,
    so it reads as one control rather than a third action. */
 .editor__views {
   display: inline-flex;
@@ -82,9 +82,14 @@
 }
 
 .editor__view[aria-pressed='true'] {
-  color: var(--ui-color-text);
-  background-color: var(--ui-color-surface);
+  color: var(--ui-color-primary-contrast);
+  background-color: var(--ui-color-primary);
   box-shadow: var(--ui-shadow-sm);
+}
+
+.editor__view[aria-pressed='true']:hover {
+  color: var(--ui-color-primary-contrast);
+  background-color: var(--ui-color-primary-hover);
 }
 
 /* Canvas ------------------------------------------------------------------ */

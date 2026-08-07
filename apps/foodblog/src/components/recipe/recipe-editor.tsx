@@ -25,7 +25,7 @@ import { RecipePage, type RelatedGroup } from './recipe-page';
  * published page beside the canvas; it is still the editor, so the canvas
  * keeps every field and the preview stays a preview.
  */
-type EditorView = 'edit' | 'split';
+type EditorView = 'full' | 'split';
 
 /**
  * Split view is only offered when both columns can still hold a page column
@@ -68,7 +68,7 @@ export function RecipeEditor({
   const [status, setStatus] = useState<RecipeStatus>(initialStatus);
   const [publishedAt, setPublishedAt] = useState<string | null>(initialPublishedAt);
   const [previewing, setPreviewing] = useState(false);
-  const [view, setView] = useState<EditorView>('edit');
+  const [view, setView] = useState<EditorView>('split');
   const [slugEdited, setSlugEdited] = useState(recipeId !== undefined);
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(
     savedNotice ? { tone: 'success', text: savedNotice } : null,
@@ -219,10 +219,10 @@ export function RecipeEditor({
               <button
                 className="editor__view"
                 type="button"
-                aria-pressed={view === 'edit'}
-                onClick={() => setView('edit')}
+                aria-pressed={view === 'full'}
+                onClick={() => setView('full')}
               >
-                Edit
+                Full view
               </button>
               <button
                 className="editor__view"
