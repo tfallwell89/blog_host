@@ -286,7 +286,8 @@ page only; every other page leads with its own `h1`.
 
 Mobile: the dashboard shell and the editor both break at `48rem`. On the editor the action bar
 stops being sticky and canvas controls become permanently visible (they are also always visible
-under `@media (hover: none)`).
+under `@media (hover: none)`). Going the other way, the editor's group rail stacks under the canvas
+below `64rem`, and split view is only offered above `80rem`, where two page columns still fit.
 
 ---
 
@@ -323,6 +324,12 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
   Anything that is part of the recipe is edited in place on the canvas, never in the rail.
 - **Provide clear Preview and Publish.** Labels change with state: `Save draft` / `Unpublish`,
   `Preview` / `Back to editing`, `Publish recipe` / `Update recipe`.
+- **Offer split view only where it helps.** The `Edit` / `Split view` toggle appears above `80rem`
+  and puts a live preview of the published page in a column beside the canvas — the same
+  `RecipePage mode="preview"` reading the same state, so it follows every keystroke. The preview
+  column is `inert`, the group rail is hidden while it is on, and the choice is remembered but not
+  applied when the window is too narrow for it. `Preview` still exists and still means the finished
+  recipe at full width; split view is for writing.
 - **Reveal move and delete controls only when relevant.** `.canvas-controls` are `opacity: 0` until
   the row is hovered or focused within — and always visible on touch and narrow screens. Disable
   rather than hide the control that cannot apply (first item's ↑, the last remaining group's ✕).
@@ -383,6 +390,10 @@ Implemented in `apps/foodblog/src/components/recipe/recipe-page.tsx` (canvas), `
   logo and `--site-accent` are the only things that differ.
 - **Responsive.** Under `64rem` the two lists collapse to one column, ingredients first, still
   filling the page column; container padding from `--ui-space-5`, images `max-width: 100%`.
+- **The page reads its own width, not only the window's.** Every collapse in `site.css` is written
+  twice: as a `@media` query, and as a `@container site` query for a page laid out in something
+  narrower than the screen (the editor's split view). Add a new one in both places, and size type
+  with `cqi` rather than `vw` so it follows the column — see `.recipe__title`.
 
 ---
 
@@ -469,7 +480,7 @@ list next to any change you make in these areas.
 | Publishing             | Slug conflict returns a field error and writes nothing; `revalidatePath` is called for both trees                                                         | `apps/foodblog/src/lib/recipes/actions.ts`                                                                                           |
 | Recipe groups          | Names differing only in case resolve to one group; membership is rebuilt on save; a group left empty is pruned; related reads hide drafts                 | `apps/foodblog/src/lib/recipes/persistence.ts`, `queries.ts`, `apps/foodblog/src/components/recipe/recipe-document.ts`               |
 | Editor interactions    | Adding a line focuses it; Enter splits; the last group cannot be removed; the slug stops tracking the title once edited                                   | `src/components/recipe/*`                                                                                                            |
-| Preview                | Preview renders the current unsaved document and exposes no mutation control                                                                              | `recipe-editor.tsx`                                                                                                                  |
+| Preview                | Preview renders the current unsaved document and exposes no mutation control; split view keeps the canvas editable beside it and hides the rail           | `recipe-editor.tsx`                                                                                                                  |
 | Public rendering       | Published recipe renders; draft slug 404s; JSON-LD contains only supplied fields                                                                          | `apps/foodblog/src/app/[subdomain]/recipes/[slug]/page.tsx`                                                                          |
 | Accessibility-critical | Dialog focus trapping and Escape; error messages associated with their field; icon-only buttons have accessible names                                     | `packages/ui/src/dialog.tsx`, `form-field.tsx`, `editable.tsx`                                                                       |
 

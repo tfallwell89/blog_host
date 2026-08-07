@@ -14,10 +14,25 @@ import { RELATED_RECIPES_PER_GROUP } from '@/lib/recipes/format';
 import { slugify } from '@/lib/slug';
 import { blogPath, blogRecipePath } from '@/lib/tenant';
 import { buildRecipeImagePathname } from '@/lib/uploads/blob-pathname';
+import { useMediaQuery } from '@/lib/use-media-query';
 
 import { GroupPanel, type EditorGroup } from './group-panel';
 import { groupNameKey, toFormValues, type RecipeDocument } from './recipe-document';
 import { RecipePage, type RelatedGroup } from './recipe-page';
+
+/**
+ * How the editing surface is arranged. Split view adds a live preview of the
+ * published page beside the canvas; it is still the editor, so the canvas
+ * keeps every field and the preview stays a preview.
+ */
+type EditorView = 'edit' | 'split';
+
+/**
+ * Split view is only offered when both columns can still hold a page column
+ * worth reading. Narrower than this the canvas needs the whole width, and the
+ * editor is the single canvas it has always been.
+ */
+const SPLIT_VIEW_QUERY = '(min-width: 80rem)';
 
 /**
  * The chrome around the recipe canvas: an action bar, save state, and the
@@ -53,6 +68,7 @@ export function RecipeEditor({
   const [status, setStatus] = useState<RecipeStatus>(initialStatus);
   const [publishedAt, setPublishedAt] = useState<string | null>(initialPublishedAt);
   const [previewing, setPreviewing] = useState(false);
+  const [view, setView] = useState<EditorView>('edit');
   const [slugEdited, setSlugEdited] = useState(recipeId !== undefined);
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(
     savedNotice ? { tone: 'success', text: savedNotice } : null,
@@ -68,6 +84,14 @@ export function RecipeEditor({
   const draftIdRef = useRef<string | null>(null);
 
   const isPublished = status === 'PUBLISHED';
+  const canSplit = useMediaQuery(SPLIT_VIEW_QUERY);
+
+  /*
+   * Preview takes the whole width while it is open, and the window can be
+   * narrowed past the threshold with split view on. Both fall back to the
+   * plain canvas without forgetting the choice, so widening restores it.
+   */
+  const splitting = view === 'split' && canSplit && !previewing;
 
   function heroImagePathname(contentType: string): string {
     if (recipeId) {
@@ -190,6 +214,27 @@ export function RecipeEditor({
         </div>
 
         <div className="editor__bar-actions">
+          {canSplit && !previewing ? (
+            <div className="editor__views" role="group" aria-label="Editor layout">
+              <button
+                className="editor__view"
+                type="button"
+                aria-pressed={view === 'edit'}
+                onClick={() => setView('edit')}
+              >
+                Edit
+              </button>
+              <button
+                className="editor__view"
+                type="button"
+                aria-pressed={view === 'split'}
+                onClick={() => setView('split')}
+              >
+                Split view
+              </button>
+            </div>
+          ) : null}
+
           <Button variant="ghost" disabled={pending} onClick={() => save('DRAFT')}>
             {isPublished ? 'Unpublish' : 'Save draft'}
           </Button>
@@ -217,8 +262,15 @@ export function RecipeEditor({
         </p>
       ) : null}
 
-      {/* Preview drops the rail: a reader gets the page column and nothing else. */}
-      <div className={cn('editor__layout', !previewing && 'editor__layout--editing')}>
+      {/* Preview drops the rail — a reader gets the page column and nothing
+          else — and so does split view, where the preview has taken its place. */}
+      <div
+        className={cn(
+          'editor__layout',
+          splitting && 'editor__layout--split',
+          !previewing && !splitting && 'editor__layout--editing',
+        )}
+      >
         <div className="editor__canvas site" style={brandColorStyle(blog.brandColor)}>
           <div className="site-container">
             {previewing ? (
@@ -253,7 +305,44 @@ export function RecipeEditor({
           </div>
         </div>
 
-        {previewing ? null : (
+        {splitting ? (
+          <aside className="editor__preview" aria-labelledby="live-preview-heading">
+            <h2 className="editor__preview-title" id="live-preview-heading">
+              Live preview
+            </h2>
+
+            {/* The scroll lives out here: the page inside is `inert`, and an
+                inert box is not something a wheel or a drag can reach. */}
+            <div className="editor__preview-scroll">
+              {/*
+               * The published page, from the same component and stylesheet a
+               * reader gets, laid out at the width of this column. It is
+               * `inert` so the recipe is in the tab order and the
+               * accessibility tree exactly once — on the canvas beside it,
+               * whose section headings also win the duplicated ids by coming
+               * first — and so a stray click cannot follow a link out of an
+               * editor that has no autosave.
+               */}
+              <div
+                className="editor__preview-page site"
+                style={brandColorStyle(blog.brandColor)}
+                inert
+              >
+                <div className="site-container">
+                  <RecipePage
+                    mode="preview"
+                    recipe={recipe}
+                    byline={byline}
+                    indexHref={indexHref}
+                    related={relatedGroups}
+                  />
+                </div>
+              </div>
+            </div>
+          </aside>
+        ) : null}
+
+        {previewing || splitting ? null : (
           <GroupPanel
             selected={recipe.groups}
             onChange={(next) => handleChange('groups', next)}

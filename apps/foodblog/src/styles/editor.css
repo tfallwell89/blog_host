@@ -55,6 +55,38 @@
   color: var(--ui-color-text-muted);
 }
 
+/* Edit or split view: which arrangement the canvas is in, not what it can do,
+   so it reads as one control rather than a third action. */
+.editor__views {
+  display: inline-flex;
+  padding: 0.15rem;
+  background-color: var(--ui-color-surface-muted);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-full);
+}
+
+.editor__view {
+  padding: 0.375rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ui-color-text-muted);
+  cursor: pointer;
+  background-color: transparent;
+  border: 0;
+  border-radius: var(--ui-radius-full);
+}
+
+.editor__view:hover {
+  color: var(--ui-color-text);
+}
+
+.editor__view[aria-pressed='true'] {
+  color: var(--ui-color-text);
+  background-color: var(--ui-color-surface);
+  box-shadow: var(--ui-shadow-sm);
+}
+
 /* Canvas ------------------------------------------------------------------ */
 
 /* One column while previewing — a reader sees the page and nothing beside it. */
@@ -75,6 +107,66 @@
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   box-shadow: var(--ui-shadow-sm);
+}
+
+/* Split view -------------------------------------------------------------- */
+
+/*
+ * The canvas beside a live preview of the published page. Two page columns
+ * need the width the rail was using, so the rail goes: a group is the one
+ * thing beside the canvas that can wait until the writing is done.
+ */
+.editor__layout--split {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+/*
+ * Both columns are now narrower than the window, so each one hands the recipe
+ * its own width to lay out against — `container-name: site` is what the
+ * recipe's responsive rules in site.css measure. The page is never scaled;
+ * it simply lays out as it would on a screen this wide.
+ */
+.editor__layout--split .editor__canvas,
+.editor__preview-page {
+  container: site / inline-size;
+}
+
+/* Stays in view while the canvas scrolls, and scrolls on its own, because the
+   two columns are only the same length by coincidence. */
+.editor__preview {
+  position: sticky;
+  /* Clear of the sticky action bar, like the rail. */
+  top: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  max-height: calc(100vh - 6rem);
+}
+
+.editor__preview-title {
+  margin: 0;
+  font-family: var(--ui-font-sans);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--ui-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* The scroll container, kept outside the inert page it holds. */
+.editor__preview-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+/* `.site` asks for the full window height; here it fills the column instead. */
+.editor__preview-page {
+  min-height: 100%;
+  padding-block: var(--ui-space-6);
 }
 
 /* Group rail -------------------------------------------------------------- */

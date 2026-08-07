@@ -313,9 +313,12 @@ html:has(.site) {
   gap: var(--ui-space-3);
 }
 
+/* `cqi` so the title is sized by the column the page is in rather than the
+   window — the two are the same thing on a public page, and are not in the
+   editor's split view. */
 .recipe__title {
   margin: 0;
-  font-size: clamp(1.9rem, 5vw, 2.75rem);
+  font-size: clamp(1.9rem, 5cqi, 2.75rem);
 }
 
 .recipe__description {
@@ -537,6 +540,29 @@ html:has(.site) {
   .site__logo {
     max-width: 9rem;
     height: 1.875rem;
+  }
+}
+
+/*
+ * The same two collapses, measured from the page column instead of the window,
+ * for anywhere the recipe is laid out in something narrower than the screen —
+ * the editor's split view gives it half of one. Only a box that declares
+ * `container-name: site` is measured, and there is none on a public page,
+ * where the rules above are what apply.
+ */
+@container site (max-width: 64rem) {
+  .recipe-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recipe__content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container site (max-width: 40rem) {
+  .recipe-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

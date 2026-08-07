@@ -95,7 +95,8 @@ bloghost/
 │           │   ├── env.ts           # parsed, validated environment
 │           │   ├── form.ts          # FormState and field-error helpers
 │           │   ├── slug.ts          # slugify / uniqueSlug
-│           │   └── tenant.ts        # every public URL is built here
+│           │   ├── tenant.ts        # every public URL is built here
+│           │   └── use-media-query.ts  # matchMedia as a React store
 │           └── styles/              # marketing.css, dashboard.css, editor.css, site.css
 ├── packages/
 │   ├── ui/                          # @bloghost/ui — generic primitives + design tokens
@@ -135,7 +136,7 @@ directory. Domain code lives in `apps/foodblog/src/lib`.
 | Recipe group panel (the rail)  | `apps/foodblog/src/components/recipe/group-panel.tsx`                                                                                              | Yes (`next/link`)                                                                                            |
 | Inline editing primitives      | `apps/foodblog/src/components/recipe/editable.tsx`                                                                                                 | No — plain React and DOM                                                                                     |
 | Recipe document model          | `apps/foodblog/src/components/recipe/recipe-document.ts`                                                                                           | No — pure data, no Prisma, no Next.js                                                                        |
-| Preview                        | Mode of `RecipePage`, toggled in `recipe-editor.tsx`                                                                                               | Yes                                                                                                          |
+| Preview                        | Mode of `RecipePage`, toggled in `recipe-editor.tsx` — full width, or beside the canvas in split view                                              | Yes                                                                                                          |
 | Publishing workflow            | `apps/foodblog/src/lib/recipes/actions.ts` → `persistence.ts`                                                                                      | Yes (`revalidatePath`)                                                                                       |
 | Database layer                 | `apps/foodblog/src/lib/db.ts`, `apps/foodblog/src/lib/*/queries.ts`, `apps/foodblog/src/lib/recipes/persistence.ts`                                | Server only                                                                                                  |
 | Shared UI layer                | `packages/ui`                                                                                                                                      | **No**                                                                                                       |
@@ -243,17 +244,18 @@ reads it.
 Nothing is persisted while typing. **There is no autosave and no draft buffer**; the document
 lives in `useState` inside `RecipeEditor` until a button is pressed. Navigating away loses it.
 
-| Step              | Trigger                                              | What happens                                                                                                                                              |
-| ----------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Create a draft | Open `/dashboard/recipes/new`                        | `emptyRecipeDocument()` gives one empty ingredient group and one empty instruction group. Nothing is written yet                                          |
-| 2. Edit           | Typing on the canvas                                 | `handleChange` updates local `RecipeDocument`. While the slug has not been hand-edited, it tracks the title through `slugify(value, 80)`                  |
-| 2b. Group it      | Typing a name in the group panel beside the canvas   | Also just `handleChange`, on `RecipeDocument.groups`. Nothing is written until a save, and a group that does not exist yet is created by that save        |
-| 3. Save           | `Save draft`                                         | `saveRecipeAction(toFormValues(recipe, 'DRAFT'), recipeId?)`. On first save the editor `router.replace`s to `/dashboard/recipes/<id>?saved=draft-created` |
-| 4. Preview        | `Preview`                                            | Local `previewing` flag swaps the canvas to `<RecipePage mode="preview">`. No network call, no modal, no mutation path                                    |
-| 5. Publish        | `Publish recipe`                                     | Same action with `status: 'PUBLISHED'`; `publishedAt` set to `now()` if it was null                                                                       |
-| 6. Edit published | Typing, then `Update recipe`                         | Same replace path; the original `publishedAt` is preserved                                                                                                |
-| 7. Unpublish      | `Unpublish` (the `Save draft` button when published) | Saves with `status: 'DRAFT'`, which sets `publishedAt = null`. Re-publishing later produces a **new** publication date                                    |
-| 8. Delete         | `Delete` in the recipe list → `ConfirmDialog`        | `deleteRecipeAction` → `prisma.recipe.deleteMany({ where: { id, blogId } })`, cascading the whole tree, then pruning groups left empty                    |
+| Step              | Trigger                                              | What happens                                                                                                                                                         |
+| ----------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Create a draft | Open `/dashboard/recipes/new`                        | `emptyRecipeDocument()` gives one empty ingredient group and one empty instruction group. Nothing is written yet                                                     |
+| 2. Edit           | Typing on the canvas                                 | `handleChange` updates local `RecipeDocument`. While the slug has not been hand-edited, it tracks the title through `slugify(value, 80)`                             |
+| 2b. Group it      | Typing a name in the group panel beside the canvas   | Also just `handleChange`, on `RecipeDocument.groups`. Nothing is written until a save, and a group that does not exist yet is created by that save                   |
+| 3. Save           | `Save draft`                                         | `saveRecipeAction(toFormValues(recipe, 'DRAFT'), recipeId?)`. On first save the editor `router.replace`s to `/dashboard/recipes/<id>?saved=draft-created`            |
+| 4. Preview        | `Preview`                                            | Local `previewing` flag swaps the canvas to `<RecipePage mode="preview">`. No network call, no modal, no mutation path                                               |
+| 4b. Split view    | `Split view`                                         | Local `view` flag puts a second `<RecipePage mode="preview">` beside the canvas, from the same state. Offered above `80rem`; the group rail is hidden while it is on |
+| 5. Publish        | `Publish recipe`                                     | Same action with `status: 'PUBLISHED'`; `publishedAt` set to `now()` if it was null                                                                                  |
+| 6. Edit published | Typing, then `Update recipe`                         | Same replace path; the original `publishedAt` is preserved                                                                                                           |
+| 7. Unpublish      | `Unpublish` (the `Save draft` button when published) | Saves with `status: 'DRAFT'`, which sets `publishedAt = null`. Re-publishing later produces a **new** publication date                                               |
+| 8. Delete         | `Delete` in the recipe list → `ConfirmDialog`        | `deleteRecipeAction` → `prisma.recipe.deleteMany({ where: { id, blogId } })`, cascading the whole tree, then pruning groups left empty                               |
 
 **Save is a full replace.** `replaceRecipe` runs one interactive `$transaction` that resolves the
 submitted group names to `Group` rows, deletes every `IngredientGroup`, `InstructionGroup` and
@@ -277,6 +279,13 @@ action turns into a field error on `slug`. `uniqueSlug()` exists in `apps/foodbl
 `RecipePage mode="preview"` inside `.editor__canvas`; the public route renders saved database rows
 through `RecipePage mode="published"` and adds the back link, print button and JSON-LD script.
 Preview cannot write anything.
+
+**Split view** renders that same `mode="preview"` a second time, in a column beside the canvas, from
+the one `recipe` state — so it follows every keystroke without a re-render path of its own. The
+column is `inert`, which keeps the recipe in the tab order and the accessibility tree exactly once,
+and it is only offered above `80rem` (`useMediaQuery` in `apps/foodblog/src/lib/use-media-query.ts`).
+Both columns declare `container-name: site`, so the recipe lays itself out from the width of the
+column rather than the window; see [§10](#10-important-architectural-decisions).
 
 **Authorization** is enforced in three places, all server-side: `requireBlog()` at the top of every
 dashboard page and every recipe action; `getEditableRecipe(recipeId, userId)` which scopes by
@@ -323,6 +332,7 @@ Editor → toFormValues(recipe, status) → saveRecipeAction(values, recipeId?) 
 
 ```
 Editor: setPreviewing(true) → <RecipePage mode="preview" recipe={localState}>
+Split view: <RecipePage mode="edit"> and <RecipePage mode="preview"> from the same localState
 (no server round trip, no mutation)
 ```
 
@@ -357,6 +367,7 @@ GET /<subdomain>/recipes/<slug>
 | `apps/foodblog/src/components/submit-button.tsx`                                                    | `useFormStatus`                                |
 | `apps/foodblog/src/components/auth/sign-in-form.tsx`, `sign-up-form.tsx`                            | `useActionState`                               |
 | `apps/foodblog/src/components/blog/onboarding-form.tsx`, `settings-form.tsx`, `appearance-form.tsx` | `useActionState`                               |
+| `apps/foodblog/src/lib/use-media-query.ts`                                                          | `matchMedia` via `useSyncExternalStore`        |
 | `apps/foodblog/src/app/error.tsx`                                                                   | Error boundaries must be client components     |
 | `packages/ui/src/dialog.tsx`                                                                        | Imperative `<dialog>.showModal()`              |
 
@@ -448,13 +459,24 @@ edited in place; grouping is a relationship _between_ recipes, so it has no posi
 recipe's reading layout and sits in a rail to the right instead
 (`apps/foodblog/src/components/recipe/group-panel.tsx`). _Why:_ a cook needs to see what a group
 already holds while deciding whether this recipe joins it. _Consequence:_ the rail is chrome — it
-uses the platform `--ui-*` tokens, disappears in preview, and stacks under the canvas below `64rem`.
-It is not a precedent for a settings sidebar: nothing that is part of the recipe may move into it.
+uses the platform `--ui-*` tokens, disappears in preview and in split view, and stacks under the
+canvas below `64rem`. It is not a precedent for a settings sidebar: nothing that is part of the
+recipe may move into it.
 
 **Preview is an in-page mode toggle.** _Why:_ it reuses the same component tree with zero extra
 state. _Consequence:_ it diverges from the intended MVP, which specifies a modal.
 `ConfirmDialog` in `@bloghost/ui` already wraps the native `<dialog>` element and is the component
 to build on when preview moves into a modal. Status: **Planned**.
+
+**The recipe lays out from its column, not from the window.** Split view puts the published page in
+half of a screen, so the recipe's two collapses — ingredients beside instructions, and the card grid
+— exist twice in `apps/foodblog/src/styles/site.css`: once as a `@media` query for a page that fills
+the window, and once as a `@container site` query for a box that does not. `editor.css` names the
+two split-view columns as that container; the public page names nothing, so it keeps the media
+queries. _Why:_ a preview should show the layout a reader on a screen that wide would get, rather
+than a desktop page scaled down. _Consequence:_ a new responsive rule on the recipe belongs in both
+blocks, and anything sized off the viewport (`vw`) should use `cqi` so it follows the column —
+`.recipe__title` already does. Status: **Implemented**.
 
 **One design; the only knob is a colour.** There are no themes. `apps/foodblog/src/styles/site.css` holds a
 single token block on `.site` — serif headings over Helvetica body copy — and the one token an
