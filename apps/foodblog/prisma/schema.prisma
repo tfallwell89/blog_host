@@ -68,7 +68,7 @@ model Blog {
   /// External http(s) image URL, like recipe photos. Null means "show the blog name".
   logoUrl     String?
   /// The one colour a blog owner controls, stored as an uppercase #RRGGBB hex.
-  brandColor  String   @default("#1F6F5C")
+  brandColor  String   @default("#FF4F5A")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

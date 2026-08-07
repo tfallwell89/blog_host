@@ -75,7 +75,7 @@ export const brandColorSchema = z
     if (!normalized) {
       ctx.addIssue({
         code: 'custom',
-        message: 'Use a hex colour like #1F6F5C',
+        message: 'Use a hex colour like #FF4F5A',
       });
       return z.NEVER;
     }

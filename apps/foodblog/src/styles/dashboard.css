@@ -93,16 +93,19 @@
 .brand-picker__swatches {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-3);
 }
 
+/*
+ * A swatch is a card whose colour bleeds to its top edge, with the name and hex
+ * beneath it. `--swatch-color` is set inline per option so the chip fill and the
+ * selected ring both read from one value.
+ */
 .swatch {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--ui-space-2);
-  align-items: center;
-  padding: var(--ui-space-2);
+  overflow: hidden;
   cursor: pointer;
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
@@ -116,8 +119,8 @@
 }
 
 .swatch:has(.swatch__input:checked) {
-  border-color: var(--ui-color-text);
-  box-shadow: inset 0 0 0 1px var(--ui-color-text);
+  border-color: var(--swatch-color);
+  box-shadow: inset 0 0 0 1px var(--swatch-color);
 }
 
 .swatch:has(.swatch__input:focus-visible) {
@@ -131,14 +134,55 @@
 }
 
 .swatch__chip {
-  width: 100%;
-  height: 2.25rem;
-  border-radius: var(--ui-radius-sm);
+  position: relative;
+  height: 6.5rem;
+  background-color: var(--swatch-color);
+}
+
+/* A white tick badge, drawn from borders so it needs no icon font. */
+.swatch__check {
+  position: absolute;
+  top: var(--ui-space-2);
+  right: var(--ui-space-2);
+  display: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: #ffffff;
+  border-radius: 999px;
+}
+
+.swatch__input:checked + .swatch__chip .swatch__check {
+  display: block;
+}
+
+.swatch__check::after {
+  position: absolute;
+  top: 0.34rem;
+  left: 0.34rem;
+  width: 0.55rem;
+  height: 0.28rem;
+  border-bottom: 2px solid var(--swatch-color);
+  border-left: 2px solid var(--swatch-color);
+  content: '';
+  transform: rotate(-45deg);
+}
+
+.swatch__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: var(--ui-space-3);
 }
 
 .swatch__label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--ui-color-text);
+}
+
+.swatch__value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.75rem;
-  font-weight: 600;
   color: var(--ui-color-text-muted);
 }
 
@@ -183,7 +227,8 @@
   outline-offset: 1px;
 }
 
-.brand-picker__value {
+.brand-picker__custom-hint {
+  margin: var(--ui-space-2) 0 0;
   font-size: 0.8125rem;
   color: var(--ui-color-text-muted);
 }

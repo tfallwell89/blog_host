@@ -71,8 +71,8 @@ export function AppearanceForm({ blog }: AppearanceFormProps) {
 
       <BrandColorPicker
         defaultValue={blog.brandColor}
-        legend="Brand colour"
-        hint="Used for links, buttons and the rules under headings on your blog."
+        legend="Choose your accent colour"
+        hint="Used for links, buttons, and the rules under headings on your blog."
         error={state.fieldErrors?.brandColor}
       />
 

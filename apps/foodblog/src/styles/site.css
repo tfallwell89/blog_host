@@ -13,7 +13,15 @@
   --site-text: #14110f;
   --site-muted: #6b6560;
   /* Replaced per blog; see lib/blog/brand.ts. */
-  --site-accent: #1f6f5c;
+  --site-accent: #ff4f5a;
+  /*
+   * The same colour with its lightness capped, for anything that carries words.
+   * The palette is deliberately bright and bright ink on white is unreadable —
+   * raw Lemon as a link is 1.6:1 — so text and filled shapes mix down to this,
+   * which clears 4.5:1 against white for every palette colour while leaving the
+   * darker ones (Violet, Sky) essentially untouched. Rules stay raw and bright.
+   */
+  --site-accent-ink: oklch(from var(--site-accent) min(l, 0.52) c h);
   --site-border: #e6e2de;
   --site-heading-font: var(--ui-font-serif);
   --site-body-font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -45,7 +53,7 @@ html:has(.site) {
 }
 
 .site a {
-  color: var(--site-accent);
+  color: var(--site-accent-ink);
 }
 
 /* The page column, and the only one: the bar, the content and the footer all
@@ -128,7 +136,7 @@ html:has(.site) {
 
 .site__nav a:hover,
 .site__nav a[aria-current='page'] {
-  color: var(--site-accent);
+  color: var(--site-accent-ink);
 }
 
 .site__main {
@@ -240,7 +248,7 @@ html:has(.site) {
   margin: 0;
   font-size: 0.6875rem;
   font-weight: 700;
-  color: var(--site-accent);
+  color: var(--site-accent-ink);
   text-transform: uppercase;
   letter-spacing: 0.09em;
 }
@@ -256,7 +264,7 @@ html:has(.site) {
 }
 
 .recipe-card__title a:hover {
-  color: var(--site-accent);
+  color: var(--site-accent-ink);
 }
 
 .recipe-card__description {
@@ -442,7 +450,8 @@ html:has(.site) {
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--site-surface);
-  background-color: var(--site-accent);
+  /* Ink, not raw: these numerals are white, and white on raw Lemon is 1.6:1. */
+  background-color: var(--site-accent-ink);
   border-radius: 999px;
   content: counter(step);
 }
@@ -484,7 +493,7 @@ html:has(.site) {
 }
 
 .site-button:hover {
-  color: var(--site-accent);
+  color: var(--site-accent-ink);
   border-color: var(--site-accent);
 }
 

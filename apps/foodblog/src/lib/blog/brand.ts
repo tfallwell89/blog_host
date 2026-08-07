@@ -9,7 +9,7 @@ import type { CSSProperties } from 'react';
  * to change. There are no themes: layout and type are the same for every blog.
  */
 
-export const DEFAULT_BRAND_COLOR = '#1F6F5C';
+export const DEFAULT_BRAND_COLOR = '#FF4F5A';
 
 export interface BrandColorOption {
   value: string;
@@ -17,27 +17,26 @@ export interface BrandColorOption {
 }
 
 /**
- * The offered palette. Every colour is dark enough to carry white text and to
- * stay legible as body-copy links, which is what keeps a blog readable without
- * asking the cook to think about contrast.
+ * The offered palette: a bright spectrum, ordered warm to cool so the swatch
+ * grid reads as a gradient rather than a list.
  */
 export const BRAND_COLOR_PALETTE: readonly BrandColorOption[] = [
-  { value: '#1F6F5C', label: 'Basil' },
-  { value: '#17636B', label: 'Sage' },
-  { value: '#24528C', label: 'Blueberry' },
-  { value: '#5B3E8E', label: 'Fig' },
-  { value: '#8C2F55', label: 'Plum' },
-  { value: '#A82C24', label: 'Chilli' },
-  { value: '#B4531F', label: 'Terracotta' },
-  { value: '#8A6A14', label: 'Honey' },
-  { value: '#4F5A32', label: 'Olive' },
-  { value: '#2A2724', label: 'Charcoal' },
+  { value: '#FF4F5A', label: 'Coral' },
+  { value: '#FF8A1E', label: 'Tangerine' },
+  { value: '#FFB300', label: 'Marigold' },
+  { value: '#FFC700', label: 'Lemon' },
+  { value: '#7CCB1F', label: 'Lime' },
+  { value: '#1EC97B', label: 'Mint' },
+  { value: '#00C2E0', label: 'Aqua' },
+  { value: '#2E7FFF', label: 'Sky' },
+  { value: '#6A3DF0', label: 'Violet' },
+  { value: '#FF3E8C', label: 'Pink' },
 ];
 
 const HEX_PATTERN = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
 /**
- * Accepts what someone actually types — `1f6f5c`, `#1F6F5C`, `#1f6` — and
+ * Accepts what someone actually types — `ff4f5a`, `#FF4F5A`, `#f45` — and
  * returns the canonical `#RRGGBB`, or null when it is not a hex colour.
  */
 export function normalizeHexColor(value: string): string | null {
@@ -48,10 +47,6 @@ export function normalizeHexColor(value: string): string | null {
   const expanded = digits.length === 3 ? digits.replace(/./g, (digit) => digit + digit) : digits;
 
   return `#${expanded.toUpperCase()}`;
-}
-
-export function isPaletteColor(value: string): boolean {
-  return BRAND_COLOR_PALETTE.some((option) => option.value === value);
 }
 
 /**

@@ -348,7 +348,7 @@ async function main(): Promise<void> {
       description:
         'Unfussy recipes for busy weeknights and slow weekends, tested in a very small London kitchen.',
       authorName: 'Jane Okafor',
-      brandColor: '#B4531F',
+      brandColor: '#FF8A1E',
       members: { create: { userId: user.id, role: 'OWNER' } },
     },
   });

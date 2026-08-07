@@ -103,7 +103,7 @@ export function OnboardingForm() {
 
       <BrandColorPicker
         defaultValue={DEFAULT_BRAND_COLOR}
-        legend="Pick your brand colour"
+        legend="Choose your accent colour"
         hint="This colours the links and headings on your blog. You can change it, and add a logo, in Appearance later."
         error={state.fieldErrors?.brandColor}
       />

@@ -406,7 +406,7 @@
 }
 
 .canvas-control:hover:not(:disabled) {
-  color: var(--site-accent);
+  color: var(--site-accent-ink);
   border-color: var(--site-accent);
 }
 
@@ -437,7 +437,7 @@
 }
 
 .canvas-add:hover {
-  color: var(--site-accent);
+  color: var(--site-accent-ink);
   border-color: var(--site-accent);
 }
 

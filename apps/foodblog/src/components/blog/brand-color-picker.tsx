@@ -1,8 +1,9 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { useId, useState } from 'react';
 
-import { BRAND_COLOR_PALETTE, isPaletteColor, normalizeHexColor } from '@/lib/blog/brand';
+import { BRAND_COLOR_PALETTE, normalizeHexColor } from '@/lib/blog/brand';
 
 export interface BrandColorPickerProps {
   defaultValue: string;
@@ -26,11 +27,11 @@ export function BrandColorPicker({
   error,
   name = 'brandColor',
 }: BrandColorPickerProps) {
-  const startedCustom = !isPaletteColor(defaultValue);
   const [selected, setSelected] = useState(defaultValue);
-  const [custom, setCustom] = useState(startedCustom ? defaultValue : '');
+  const [custom, setCustom] = useState(defaultValue);
   const customId = useId();
   const hintId = useId();
+  const customHintId = useId();
 
   function handleCustomChange(value: string) {
     setCustom(value);
@@ -52,7 +53,11 @@ export function BrandColorPicker({
 
       <div className="brand-picker__swatches">
         {BRAND_COLOR_PALETTE.map((option) => (
-          <label className="swatch" key={option.value} title={option.label}>
+          <label
+            className="swatch"
+            key={option.value}
+            style={{ '--swatch-color': option.value } as CSSProperties}
+          >
             <input
               className="swatch__input"
               type="radio"
@@ -61,22 +66,23 @@ export function BrandColorPicker({
               checked={selected === option.value}
               onChange={() => {
                 setSelected(option.value);
-                setCustom('');
+                setCustom(option.value);
               }}
             />
-            <span
-              className="swatch__chip"
-              style={{ backgroundColor: option.value }}
-              aria-hidden="true"
-            />
-            <span className="swatch__label">{option.label}</span>
+            <span className="swatch__chip" aria-hidden="true">
+              <span className="swatch__check" />
+            </span>
+            <span className="swatch__text">
+              <span className="swatch__label">{option.label}</span>
+              <span className="swatch__value">{option.value}</span>
+            </span>
           </label>
         ))}
       </div>
 
       <div className="brand-picker__custom">
         <label className="brand-picker__custom-label" htmlFor={customId}>
-          Or use your own hex value
+          Custom colour
         </label>
         <div className="brand-picker__custom-row">
           <span
@@ -90,13 +96,16 @@ export function BrandColorPicker({
             type="text"
             value={custom}
             onChange={(event) => handleCustomChange(event.target.value)}
-            placeholder="#1F6F5C"
+            placeholder="#FF4F5A"
             spellCheck={false}
             autoComplete="off"
             maxLength={7}
+            aria-describedby={customHintId}
           />
-          <output className="brand-picker__value">{selected}</output>
         </div>
+        <p className="brand-picker__custom-hint" id={customHintId}>
+          Enter a hex value like #FF4F5A
+        </p>
       </div>
 
       {error ? (
