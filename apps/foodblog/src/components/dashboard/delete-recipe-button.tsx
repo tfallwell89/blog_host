@@ -36,6 +36,23 @@ export function DeleteRecipeButton({ recipeId, recipeTitle }: DeleteRecipeButton
   return (
     <>
       <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+        <svg
+          className="recipe-row__delete-icon"
+          viewBox="0 0 24 24"
+          width="14"
+          height="14"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M3 6h18" />
+          <path d="M8 6V4h8v2" />
+          <path d="m19 6-1 14H6L5 6" />
+          <path d="M10 11v5M14 11v5" />
+        </svg>
         Delete
       </Button>
 

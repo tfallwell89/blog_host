@@ -417,9 +417,26 @@
 .recipe-row__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ui-space-2);
+  gap: 0;
   align-items: center;
   justify-content: flex-end;
+  overflow: hidden;
+  border: 1px solid var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-md);
+}
+
+.recipe-row__actions > .ui-button {
+  border: 0;
+  border-radius: 0;
+}
+
+.recipe-row__actions > .ui-button:not(:first-child) {
+  border-left: 1px solid var(--ui-color-border);
+}
+
+.recipe-row__delete-icon {
+  flex: none;
+  color: var(--ui-color-danger);
 }
 
 /* Filters ---------------------------------------------------------------- */
