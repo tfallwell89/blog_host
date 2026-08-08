@@ -448,6 +448,8 @@
 
 .ui-modal__toolbar {
   padding: var(--ui-space-3) var(--ui-space-5);
+  color: var(--ui-color-primary-contrast);
+  background-color: var(--ui-color-text);
   border-bottom: 1px solid var(--ui-color-border);
 }
 

@@ -190,10 +190,10 @@
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--ui-color-text-muted);
+  color: var(--ui-color-primary-contrast);
   cursor: pointer;
-  background-color: var(--ui-color-surface);
-  border: 1px solid var(--ui-color-border);
+  background-color: transparent;
+  border: 1px solid rgb(255 255 255 / 35%);
 }
 
 .recipe-preview__viewport-button:first-child {
@@ -209,8 +209,8 @@
 }
 
 .recipe-preview__viewport-button:hover {
-  color: var(--ui-color-text);
-  background-color: var(--ui-color-surface-muted);
+  color: var(--ui-color-primary-contrast);
+  background-color: rgb(255 255 255 / 12%);
 }
 
 .recipe-preview__viewport-button[aria-pressed='true'] {
