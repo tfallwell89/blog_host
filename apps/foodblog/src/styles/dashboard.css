@@ -292,9 +292,21 @@
 
 .stat {
   padding: var(--ui-space-4);
+  color: var(--ui-color-text);
+  text-decoration: none;
   background-color: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
+}
+
+.stat:hover,
+.stat:focus-visible {
+  border-color: var(--ui-color-primary);
+}
+
+.stat:focus-visible {
+  outline: 2px solid var(--ui-color-primary);
+  outline-offset: 2px;
 }
 
 .stat__label {

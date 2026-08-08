@@ -50,18 +50,18 @@ export default async function DashboardOverviewPage() {
 
       <section aria-label="Recipe counts">
         <div className="stat-grid">
-          <div className="stat">
+          <Link className="stat" href="/dashboard/recipes">
             <p className="stat__label">Recipes</p>
             <p className="stat__value">{stats.total}</p>
-          </div>
-          <div className="stat">
+          </Link>
+          <Link className="stat" href="/dashboard/recipes?status=published">
             <p className="stat__label">Published</p>
             <p className="stat__value">{stats.published}</p>
-          </div>
-          <div className="stat">
+          </Link>
+          <Link className="stat" href="/dashboard/recipes?status=draft">
             <p className="stat__label">Drafts</p>
             <p className="stat__value">{stats.drafts}</p>
-          </div>
+          </Link>
         </div>
       </section>
 
