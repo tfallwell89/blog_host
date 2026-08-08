@@ -45,9 +45,9 @@
   --ui-space-8: 4rem;
 
   /* Radii */
-  --ui-radius-sm: 6px;
-  --ui-radius-md: 10px;
-  --ui-radius-lg: 16px;
+  --ui-radius-sm: 2px;
+  --ui-radius-md: 4px;
+  --ui-radius-lg: 8px;
   --ui-radius-full: 999px;
 
   /* Elevation */
@@ -256,7 +256,7 @@
 .ui-card {
   background-color: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
+  border-radius: var(--ui-radius-md);
   box-shadow: var(--ui-shadow-sm);
 }
 
@@ -344,7 +344,7 @@
   color: var(--ui-color-text);
   background-color: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
+  border-radius: var(--ui-radius-md);
   box-shadow: var(--ui-shadow-lg);
 }
 
@@ -391,7 +391,7 @@
   color: var(--ui-color-text);
   background-color: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
+  border-radius: var(--ui-radius-md);
   box-shadow: var(--ui-shadow-lg);
 }
 
@@ -490,7 +490,7 @@
   text-align: center;
   background-color: var(--ui-color-surface);
   border: 1px dashed var(--ui-color-border-strong);
-  border-radius: var(--ui-radius-lg);
+  border-radius: var(--ui-radius-md);
 }
 
 .ui-empty-state__icon {

@@ -29,7 +29,7 @@
   padding: 0.1rem 0.35rem;
   font-size: 0.8125rem;
   background-color: var(--ui-color-surface-muted);
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-radius-md);
 }
 
 /* Appearance ------------------------------------------------------------- */
@@ -208,7 +208,7 @@
   width: 2.25rem;
   height: 2.25rem;
   border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-radius-md);
 }
 
 .brand-picker__input {
@@ -219,7 +219,7 @@
   color: var(--ui-color-text);
   background-color: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border-strong);
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-radius-md);
 }
 
 .brand-picker__input:focus {
@@ -294,7 +294,7 @@
   padding: var(--ui-space-4);
   background-color: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
+  border-radius: var(--ui-radius-md);
 }
 
 .stat__label {
@@ -326,7 +326,7 @@
   word-break: break-all;
   background-color: var(--ui-color-surface-muted);
   border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-radius-md);
 }
 
 /* Recipe list ------------------------------------------------------------ */

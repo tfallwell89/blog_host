@@ -37,7 +37,7 @@
   height: 1.75rem;
   font-size: 0.95rem;
   background-color: var(--ui-color-primary-soft);
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-radius-md);
 }
 
 .marketing__nav {
@@ -181,7 +181,7 @@
   padding: var(--ui-space-5);
   background-color: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
+  border-radius: var(--ui-radius-md);
 }
 
 .step__number {
@@ -246,7 +246,7 @@
   overflow: hidden;
   background-color: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
+  border-radius: var(--ui-radius-md);
   box-shadow: var(--ui-shadow-lg);
 }
 
@@ -367,7 +367,7 @@
   text-align: center;
   background-color: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
+  border-radius: var(--ui-radius-md);
 }
 
 /* ------------------------------------------------------------------- Footer */

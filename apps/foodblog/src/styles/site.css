@@ -27,7 +27,7 @@
   --site-body-font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --site-heading-weight: 600;
   --site-heading-spacing: -0.015em;
-  --site-radius: 6px;
+  --site-radius: var(--ui-radius-md);
   --site-title-size: clamp(1.9rem, 4.5vw, 2.9rem);
   --site-bar-height: 3.5rem;
 
