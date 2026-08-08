@@ -170,7 +170,7 @@ export function RecipePage(props: RecipePageProps) {
 
       {edit ? null : (
         <div className="recipe__actions">
-          <Link className="site-button" href={indexHref}>
+          <Link className="site-button recipe__back-button" href={indexHref}>
             Back to all recipes
           </Link>
           <PrintButton />

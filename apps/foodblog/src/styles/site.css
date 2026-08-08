@@ -90,7 +90,7 @@ html:has(.site) {
   min-height: var(--site-bar-height);
 }
 
-.site__brand {
+.site .site__brand {
   display: inline-flex;
   align-items: center;
   min-width: 0;
@@ -530,6 +530,12 @@ html:has(.site) {
 
 .site-button:hover {
   color: var(--site-accent-ink);
+  border-color: var(--site-accent);
+}
+
+.site .recipe__back-button,
+.site .recipe__back-button:hover {
+  color: var(--site-text);
   border-color: var(--site-accent);
 }
 
