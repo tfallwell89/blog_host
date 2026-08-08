@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRef, useState, useTransition } from 'react';
 
+import { SiteHeader } from '@/components/site/site-header';
 import { ImageUploadButton } from '@/components/uploads/image-upload-button';
 import { brandColorStyle } from '@/lib/blog/brand';
 import type { FieldErrors } from '@/lib/form';
@@ -364,15 +365,18 @@ export function RecipeEditor({
                 style={brandColorStyle(blog.brandColor)}
                 inert
               >
-                <div className="site-container">
-                  <RecipePage
-                    mode="preview"
-                    recipe={recipe}
-                    byline={byline}
-                    indexHref={indexHref}
-                    related={relatedGroups}
-                  />
-                </div>
+                <SiteHeader blog={blog} activePage="recipes" />
+                <main className="site__main">
+                  <div className="site-container">
+                    <RecipePage
+                      mode="preview"
+                      recipe={recipe}
+                      byline={byline}
+                      indexHref={indexHref}
+                      related={relatedGroups}
+                    />
+                  </div>
+                </main>
               </div>
             </div>
           </aside>

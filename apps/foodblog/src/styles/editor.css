@@ -175,7 +175,6 @@
 /* `.site` asks for the full window height; here it fills the column instead. */
 .editor__preview-page {
   min-height: 100%;
-  padding-block: var(--ui-space-6);
 }
 
 /* Modal preview ----------------------------------------------------------- */
