@@ -775,6 +775,13 @@
   margin-inline: 0;
 }
 
+.recipe--editing .recipe__title .editable,
+.recipe--editing .recipe__description .editable,
+.recipe--editing .recipe-photo__field,
+.recipe--editing .recipe__intro .editable {
+  margin-inline: 0;
+}
+
 .recipe--editing .recipe__group:nth-last-child(2) {
   margin-bottom: 0;
 }
