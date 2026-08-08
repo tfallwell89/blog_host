@@ -114,6 +114,7 @@ export default async function RecipesPage({
                       className={buttonClassName({ variant: 'secondary', size: 'sm' })}
                       href={`/dashboard/recipes/${recipe.id}`}
                     >
+                      <span aria-hidden="true">✎</span>
                       Edit
                     </Link>
                     {recipe.status === 'PUBLISHED' ? (

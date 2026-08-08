@@ -108,6 +108,7 @@ export default async function DashboardOverviewPage() {
                     className={buttonClassName({ variant: 'secondary', size: 'sm' })}
                     href={`/dashboard/recipes/${recipe.id}`}
                   >
+                    <span aria-hidden="true">✎</span>
                     Edit
                   </Link>
                 }
