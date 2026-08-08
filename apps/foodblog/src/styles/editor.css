@@ -743,6 +743,28 @@
   margin-top: var(--ui-space-3);
 }
 
+.recipe-story__guidance {
+  padding-top: var(--ui-space-4);
+  margin-bottom: var(--ui-space-4);
+  font-family: var(--ui-font-sans);
+  border-top: 1px solid var(--site-border);
+}
+
+.recipe-story__guidance-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--site-text);
+}
+
+.recipe-story__guidance-copy {
+  max-width: 42rem;
+  margin: var(--ui-space-1) 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--site-muted);
+}
+
 .recipe--editing .recipe__notes .editable {
   margin-top: var(--ui-space-3);
 }

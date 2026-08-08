@@ -424,6 +424,14 @@ function RecipeStory({ recipe, edit }: SectionProps) {
 
   return (
     <section className="recipe__story">
+      <div className="recipe-story__guidance">
+        <p className="recipe-story__guidance-title">Optional: add more context</p>
+        <p className="recipe-story__guidance-copy">
+          Most recipes are clearest without this section. Use it when a short story, technique, or
+          serving idea will genuinely help the reader.
+        </p>
+      </div>
+
       <h2 className="recipe__section-title">
         <EditableText
           value={recipe.storyTitle}
