@@ -32,7 +32,13 @@ export default async function DashboardOverviewPage() {
           <Link className={buttonClassName()} href="/dashboard/recipes/new">
             Add a recipe
           </Link>
-          <Link className={buttonClassName({ variant: 'secondary' })} href={publicPath}>
+          <Link
+            className={buttonClassName({
+              variant: 'secondary',
+              className: 'dashboard-view-blog',
+            })}
+            href={publicPath}
+          >
             View your food blog
           </Link>
         </div>

@@ -34,7 +34,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
       topbarActions={
         <>
           <Link
-            className={buttonClassName({ variant: 'secondary', size: 'sm' })}
+            className={buttonClassName({
+              variant: 'secondary',
+              size: 'sm',
+              className: 'dashboard-view-blog',
+            })}
             href={blogPath(blog.subdomain)}
           >
             View blog

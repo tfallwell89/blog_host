@@ -25,7 +25,10 @@ export default async function AppearancePage() {
         </div>
         <div className="page-header__actions">
           <Link
-            className={buttonClassName({ variant: 'secondary' })}
+            className={buttonClassName({
+              variant: 'secondary',
+              className: 'dashboard-view-blog',
+            })}
             href={blogPath(blog.subdomain)}
           >
             View your food blog

@@ -282,6 +282,18 @@
   gap: var(--ui-space-2);
 }
 
+.dashboard-view-blog.ui-button {
+  color: #fff;
+  background-color: #14110f;
+  border-color: #14110f;
+}
+
+.dashboard-view-blog.ui-button:hover {
+  color: #fff;
+  background-color: #3d3834;
+  border-color: #3d3834;
+}
+
 /* Overview --------------------------------------------------------------- */
 
 .stat-grid {
