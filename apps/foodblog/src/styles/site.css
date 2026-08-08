@@ -564,6 +564,15 @@ html:has(.site) {
   .recipe-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .site__nav {
+    gap: var(--ui-space-3);
+  }
+
+  .site__logo {
+    max-width: 9rem;
+    height: 1.875rem;
+  }
 }
 
 /* Print ------------------------------------------------------------------- */

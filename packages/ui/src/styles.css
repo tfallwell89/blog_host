@@ -380,6 +380,100 @@
   margin-top: var(--ui-space-2);
 }
 
+/* -------------------------------------------------------------------- Modal */
+
+.ui-modal {
+  width: min(96rem, calc(100vw - 2rem));
+  max-width: none;
+  height: min(60rem, calc(100dvh - 2rem));
+  max-height: none;
+  padding: 0;
+  color: var(--ui-color-text);
+  background-color: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-lg);
+}
+
+.ui-modal::backdrop {
+  background-color: rgb(31 26 23 / 55%);
+}
+
+.ui-modal__body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ui-modal__header {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ui-space-4) var(--ui-space-5);
+  border-bottom: 1px solid var(--ui-color-border);
+}
+
+.ui-modal__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.ui-modal__close {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font: inherit;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--ui-color-text-muted);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--ui-radius-full);
+  place-items: center;
+}
+
+.ui-modal__close:hover {
+  color: var(--ui-color-text);
+  background-color: var(--ui-color-surface-muted);
+}
+
+.ui-modal__close:focus-visible {
+  outline: 2px solid var(--ui-color-focus);
+  outline-offset: 2px;
+}
+
+.ui-modal__toolbar {
+  padding: var(--ui-space-3) var(--ui-space-5);
+  border-bottom: 1px solid var(--ui-color-border);
+}
+
+.ui-modal__content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background-color: var(--ui-color-bg);
+}
+
+@media (max-width: 48rem) {
+  .ui-modal {
+    width: 100vw;
+    height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .ui-modal__header,
+  .ui-modal__toolbar {
+    padding-inline: var(--ui-space-4);
+  }
+}
+
 /* --------------------------------------------------------------- EmptyState */
 
 .ui-empty-state {

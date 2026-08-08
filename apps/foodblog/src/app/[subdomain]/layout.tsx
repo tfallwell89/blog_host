@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { SiteNav } from '@/components/site/site-nav';
+import { SiteHeader } from '@/components/site/site-header';
 import { brandColorStyle } from '@/lib/blog/brand';
 import { getBlogBySubdomain } from '@/lib/blog/queries';
 import { blogPath } from '@/lib/tenant';
@@ -46,26 +46,13 @@ export default async function SiteLayout({
     notFound();
   }
 
-  const home = blogPath(blog.subdomain);
-
   return (
     <div className="site" style={brandColorStyle(blog.brandColor)}>
       <a className="skip-link" href="#site-main">
         Skip to content
       </a>
 
-      <header className="site__bar">
-        <div className="site-container site__bar-inner">
-          <Link className="site__brand" href={home}>
-            {blog.logoUrl ? (
-              <img className="site__logo" src={blog.logoUrl} alt={blog.name} />
-            ) : (
-              <span className="site__brand-name">{blog.name}</span>
-            )}
-          </Link>
-          <SiteNav subdomain={blog.subdomain} />
-        </div>
-      </header>
+      <SiteHeader blog={blog} />
 
       <main className="site__main" id="site-main">
         <div className="site-container">{children}</div>

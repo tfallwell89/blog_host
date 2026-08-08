@@ -49,12 +49,6 @@
   color: var(--ui-color-text-muted);
 }
 
-.editor__preview-note {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--ui-color-text-muted);
-}
-
 /* Full or split view: which arrangement the canvas is in, not what it can do,
    so it reads as one control rather than a third action. */
 .editor__views {
@@ -182,6 +176,91 @@
 .editor__preview-page {
   min-height: 100%;
   padding-block: var(--ui-space-6);
+}
+
+/* Modal preview ----------------------------------------------------------- */
+
+.recipe-preview__viewport-toggle {
+  display: flex;
+  justify-content: center;
+}
+
+.recipe-preview__viewport-button {
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ui-color-text-muted);
+  cursor: pointer;
+  background-color: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
+}
+
+.recipe-preview__viewport-button:first-child {
+  border-radius: var(--ui-radius-md) 0 0 var(--ui-radius-md);
+}
+
+.recipe-preview__viewport-button:last-child {
+  border-radius: 0 var(--ui-radius-md) var(--ui-radius-md) 0;
+}
+
+.recipe-preview__viewport-button + .recipe-preview__viewport-button {
+  margin-left: -1px;
+}
+
+.recipe-preview__viewport-button:hover {
+  color: var(--ui-color-text);
+  background-color: var(--ui-color-surface-muted);
+}
+
+.recipe-preview__viewport-button[aria-pressed='true'] {
+  position: relative;
+  color: var(--ui-color-primary-contrast);
+  background-color: var(--ui-color-primary);
+  border-color: var(--ui-color-primary);
+}
+
+.recipe-preview__viewport-button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--ui-color-focus);
+  outline-offset: 2px;
+}
+
+.recipe-preview__stage {
+  display: flex;
+  justify-content: center;
+  width: max-content;
+  min-width: 100%;
+  min-height: 100%;
+  padding: var(--ui-space-4);
+}
+
+.recipe-preview__frame {
+  flex: none;
+  overflow: hidden;
+  background-color: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+.recipe-preview__frame--desktop {
+  width: 80rem;
+}
+
+.recipe-preview__frame--tablet {
+  width: 48rem;
+}
+
+.recipe-preview__frame--mobile {
+  width: min(23.4375rem, calc(100vw - 1.5rem));
+}
+
+.recipe-preview__site {
+  container-name: site;
+  container-type: inline-size;
+  min-height: 100%;
 }
 
 /* Group rail -------------------------------------------------------------- */

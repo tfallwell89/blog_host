@@ -20,6 +20,8 @@ export default async function NewRecipePage() {
   return (
     <RecipeEditor
       blog={{
+        name: blog.name,
+        logoUrl: blog.logoUrl,
         subdomain: blog.subdomain,
         authorName: blog.authorName,
         brandColor: blog.brandColor,

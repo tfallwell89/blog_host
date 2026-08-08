@@ -19,6 +19,7 @@ import { useMediaQuery } from '@/lib/use-media-query';
 import { GroupPanel, type EditorGroup } from './group-panel';
 import { groupNameKey, toFormValues, type RecipeDocument } from './recipe-document';
 import { RecipePage, type RelatedGroup } from './recipe-page';
+import { RecipePreviewModal } from './recipe-preview-modal';
 
 /**
  * How the editing surface is arranged. Split view adds a live preview of the
@@ -35,12 +36,18 @@ type EditorView = 'full' | 'split';
 const SPLIT_VIEW_QUERY = '(min-width: 80rem)';
 
 /**
- * The chrome around the recipe canvas: an action bar, save state, and the
- * switch between writing and previewing. Everything that a reader would
- * actually see is rendered by `RecipePage`, in edit or preview mode.
+ * The chrome around the recipe canvas: an action bar, save state, layout
+ * controls and a modal preview. Reader-facing content is rendered by
+ * `RecipePage` both here and on the public site.
  */
 export interface RecipeEditorProps {
-  blog: { subdomain: string; authorName: string; brandColor: string };
+  blog: {
+    name: string;
+    logoUrl: string | null;
+    subdomain: string;
+    authorName: string;
+    brandColor: string;
+  };
   initialRecipe: RecipeDocument;
   initialStatus: RecipeStatus;
   /** ISO publication timestamp, shown in the byline. */
@@ -67,7 +74,7 @@ export function RecipeEditor({
   const [recipe, setRecipe] = useState<RecipeDocument>(initialRecipe);
   const [status, setStatus] = useState<RecipeStatus>(initialStatus);
   const [publishedAt, setPublishedAt] = useState<string | null>(initialPublishedAt);
-  const [previewing, setPreviewing] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [view, setView] = useState<EditorView>('split');
   const [slugEdited, setSlugEdited] = useState(recipeId !== undefined);
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(
@@ -87,11 +94,11 @@ export function RecipeEditor({
   const canSplit = useMediaQuery(SPLIT_VIEW_QUERY);
 
   /*
-   * Preview takes the whole width while it is open, and the window can be
-   * narrowed past the threshold with split view on. Both fall back to the
-   * plain canvas without forgetting the choice, so widening restores it.
+   * The window can be narrowed past the threshold with split view on. It falls
+   * back to the full canvas without forgetting the choice, so widening
+   * restores it.
    */
-  const splitting = view === 'split' && canSplit && !previewing;
+  const splitting = view === 'split' && canSplit;
 
   function heroImagePathname(contentType: string): string {
     if (recipeId) {
@@ -126,7 +133,7 @@ export function RecipeEditor({
       if (!result.ok) {
         setFieldErrors(result.fieldErrors);
         setMessage({ tone: 'error', text: result.message });
-        setPreviewing(false);
+        setPreviewOpen(false);
         return;
       }
 
@@ -214,7 +221,7 @@ export function RecipeEditor({
         </div>
 
         <div className="editor__bar-actions">
-          {canSplit && !previewing ? (
+          {canSplit ? (
             <div className="editor__views" role="group" aria-label="Editor layout">
               <button
                 className="editor__view"
@@ -238,8 +245,8 @@ export function RecipeEditor({
           <Button variant="ghost" disabled={pending} onClick={() => save('DRAFT')}>
             {isPublished ? 'Unpublish' : 'Save draft'}
           </Button>
-          <Button variant="secondary" onClick={() => setPreviewing((current) => !current)}>
-            {previewing ? 'Back to editing' : 'Preview'}
+          <Button variant="secondary" onClick={() => setPreviewOpen(true)}>
+            Preview
           </Button>
           <Button disabled={pending} onClick={() => save('PUBLISHED')}>
             {isPublished ? 'Update recipe' : 'Publish recipe'}
@@ -256,19 +263,12 @@ export function RecipeEditor({
         </p>
       ) : null}
 
-      {previewing ? (
-        <p className="editor__preview-note">
-          This is how readers will see the recipe. Changes are not saved until you publish.
-        </p>
-      ) : null}
-
-      {/* Preview drops the rail — a reader gets the page column and nothing
-          else — and so does split view, where the preview has taken its place. */}
+      {/* Split view drops the rail, where the live preview has taken its place. */}
       <div
         className={cn(
           'editor__layout',
           splitting && 'editor__layout--split',
-          !previewing && !splitting && 'editor__layout--editing',
+          !splitting && 'editor__layout--editing',
         )}
       >
         <div className="editor__edit-column">
@@ -276,35 +276,25 @@ export function RecipeEditor({
 
           <div className="editor__canvas site" style={brandColorStyle(blog.brandColor)}>
             <div className="site-container">
-              {previewing ? (
-                <RecipePage
-                  mode="preview"
-                  recipe={recipe}
-                  byline={byline}
-                  indexHref={indexHref}
-                  related={relatedGroups}
-                />
-              ) : (
-                <RecipePage
-                  mode="edit"
-                  recipe={recipe}
-                  byline={byline}
-                  indexHref={indexHref}
-                  edit={{
-                    onChange: handleChange,
-                    fieldErrors,
-                    slugPrefix: `${indexHref}/recipes/`,
-                    photoUpload: (
-                      <ImageUploadButton
-                        buildPathname={heroImagePathname}
-                        onUploaded={(blob) => handleChange('featuredImageUrl', blob.url)}
-                        label={recipe.featuredImageUrl ? 'Replace photo' : 'Upload photo'}
-                        disabled={pending}
-                      />
-                    ),
-                  }}
-                />
-              )}
+              <RecipePage
+                mode="edit"
+                recipe={recipe}
+                byline={byline}
+                indexHref={indexHref}
+                edit={{
+                  onChange: handleChange,
+                  fieldErrors,
+                  slugPrefix: `${indexHref}/recipes/`,
+                  photoUpload: (
+                    <ImageUploadButton
+                      buildPathname={heroImagePathname}
+                      onUploaded={(blob) => handleChange('featuredImageUrl', blob.url)}
+                      label={recipe.featuredImageUrl ? 'Replace photo' : 'Upload photo'}
+                      disabled={pending}
+                    />
+                  ),
+                }}
+              />
             </div>
           </div>
         </div>
@@ -346,7 +336,7 @@ export function RecipeEditor({
           </aside>
         ) : null}
 
-        {previewing || splitting ? null : (
+        {splitting ? null : (
           <GroupPanel
             selected={recipe.groups}
             onChange={(next) => handleChange('groups', next)}
@@ -356,6 +346,16 @@ export function RecipeEditor({
           />
         )}
       </div>
+
+      <RecipePreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        blog={blog}
+        recipe={recipe}
+        byline={byline}
+        indexHref={indexHref}
+        related={relatedGroups}
+      />
     </div>
   );
 }

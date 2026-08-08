@@ -26,5 +26,6 @@ export { ConfirmDialog, type ConfirmDialogProps } from './dialog';
 export { EmptyState, type EmptyStateProps } from './empty-state';
 export { FormField, type FormFieldProps, type FormFieldRenderProps } from './form-field';
 export { Input, type InputProps } from './input';
+export { Modal, type ModalProps } from './modal';
 export { Select, type SelectOption, type SelectProps } from './select';
 export { Textarea, type TextareaProps } from './textarea';

@@ -44,6 +44,8 @@ export default async function EditRecipePage({
   return (
     <RecipeEditor
       blog={{
+        name: blog.name,
+        logoUrl: blog.logoUrl,
         subdomain: blog.subdomain,
         authorName: blog.authorName,
         brandColor: blog.brandColor,
