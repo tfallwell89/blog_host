@@ -300,7 +300,8 @@
   margin: 0;
   font-family: var(--ui-font-serif);
   font-size: clamp(1.5rem, 3.5vw, 2rem);
-  letter-spacing: -0.01em;
+  font-weight: 400;
+  letter-spacing: 0.006em;
 }
 
 .preview__blog-tagline {
@@ -339,6 +340,8 @@
   margin: 0 0 0.25rem;
   font-family: var(--ui-font-serif);
   font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.006em;
 }
 
 .preview__card-meta {
