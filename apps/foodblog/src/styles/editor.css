@@ -770,6 +770,23 @@
   border-top: 1px solid var(--site-border);
 }
 
+.recipe--editing .recipe__group:nth-last-child(2) {
+  margin-bottom: 0;
+}
+
+.recipe--editing .recipe__notes {
+  position: relative;
+}
+
+.recipe--editing .recipe__notes::before {
+  position: absolute;
+  top: calc(-1 * (var(--ui-space-4) + 1px));
+  right: 0;
+  left: 0;
+  border-top: 1px solid var(--site-border);
+  content: '';
+}
+
 .recipe--editing .recipe__notes .editable {
   margin-top: var(--ui-space-3);
 }
