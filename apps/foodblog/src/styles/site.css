@@ -126,17 +126,23 @@ html:has(.site) {
 }
 
 .site__nav a {
+  padding-block: 0.25rem;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--site-muted);
   text-decoration: none;
   text-transform: uppercase;
   letter-spacing: 0.09em;
+  border-bottom: 1px solid transparent;
 }
 
 .site__nav a:hover,
 .site__nav a[aria-current='page'] {
   color: var(--site-accent-ink);
+}
+
+.site__nav a[aria-current='page'] {
+  border-bottom-color: var(--site-accent);
 }
 
 .site__main {
