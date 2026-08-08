@@ -447,10 +447,13 @@
 }
 
 .ui-modal__toolbar {
+  position: relative;
+  z-index: 1;
   padding: var(--ui-space-3) var(--ui-space-5);
   color: var(--ui-color-primary-contrast);
-  background-color: #34302d;
-  border-bottom: 1px solid var(--ui-color-border);
+  background: radial-gradient(ellipse at top, #3a3633 0%, #24211f 58%, #171615 100%);
+  border-bottom: 1px solid #080706;
+  box-shadow: 0 0.3rem 0.75rem rgb(0 0 0 / 32%);
 }
 
 .ui-modal__content {

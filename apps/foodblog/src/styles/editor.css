@@ -246,7 +246,7 @@
   overflow: hidden;
   background-color: var(--ui-color-surface);
   border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
+  border-radius: 0;
   box-shadow: var(--ui-shadow-sm);
 }
 
