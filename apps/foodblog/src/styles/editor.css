@@ -230,10 +230,14 @@
 .recipe-preview__stage {
   display: flex;
   justify-content: center;
+  width: 100%;
+  min-height: 100%;
+}
+
+.recipe-preview__stage--tablet,
+.recipe-preview__stage--mobile {
   width: max-content;
   min-width: 100%;
-  min-height: 100%;
-  padding: var(--ui-space-4);
 }
 
 .recipe-preview__frame {
@@ -246,7 +250,10 @@
 }
 
 .recipe-preview__frame--desktop {
-  width: 80rem;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .recipe-preview__frame--tablet {

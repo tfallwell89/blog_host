@@ -64,7 +64,7 @@ export function RecipePreviewModal({
 
   return (
     <Modal open={open} title="Preview" toolbar={toolbar} onClose={onClose}>
-      <div className="recipe-preview__stage">
+      <div className={cn('recipe-preview__stage', `recipe-preview__stage--${viewport}`)}>
         <div
           className={cn('recipe-preview__frame', `recipe-preview__frame--${viewport}`)}
           aria-label={`${viewport} preview`}
