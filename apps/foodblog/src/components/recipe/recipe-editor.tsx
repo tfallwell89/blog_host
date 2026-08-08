@@ -4,7 +4,7 @@ import { Badge, Button, buttonClassName, cn } from '@bloghost/ui';
 import type { RecipeStatus } from '@prisma/client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { SiteHeader } from '@/components/site/site-header';
 import { ImageUploadButton } from '@/components/uploads/image-upload-button';
@@ -35,6 +35,37 @@ type EditorView = 'full' | 'split';
  * editor is the single canvas it has always been.
  */
 const SPLIT_VIEW_QUERY = '(min-width: 80rem)';
+
+function hasRecipeContent(recipe: RecipeDocument): boolean {
+  const scalarValues = [
+    recipe.title,
+    recipe.slug,
+    recipe.description,
+    recipe.introduction,
+    recipe.storyTitle,
+    recipe.storyBody,
+    recipe.storyImageUrl,
+    recipe.featuredImageUrl,
+    recipe.prepMinutes,
+    recipe.cookMinutes,
+    recipe.additionalMinutes,
+    recipe.servings,
+    recipe.cuisine,
+    recipe.course,
+    recipe.difficulty,
+    recipe.notes,
+  ];
+
+  return (
+    scalarValues.some((value) => value.trim() !== '') ||
+    recipe.groups.some((name) => name.trim() !== '') ||
+    [...recipe.ingredientGroups, ...recipe.instructionGroups].some(
+      (group) =>
+        group.title.trim() !== '' ||
+        group.items.some((item) => item.text.trim() !== '' || item.imageUrl.trim() !== ''),
+    )
+  );
+}
 
 /**
  * The chrome around the recipe canvas: an action bar, save state, layout
@@ -77,12 +108,17 @@ export function RecipeEditor({
   const [publishedAt, setPublishedAt] = useState<string | null>(initialPublishedAt);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [view, setView] = useState<EditorView>('split');
-  const [slugEdited, setSlugEdited] = useState(recipeId !== undefined);
+  const [slugEdited, setSlugEdited] = useState(
+    recipeId !== undefined &&
+      recipe.slug !== slugify(recipe.title, 80) &&
+      !/^draft-[0-9a-f-]{36}$/.test(recipe.slug),
+  );
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(
     savedNotice ? { tone: 'success', text: savedNotice } : null,
   );
   const [fieldErrors, setFieldErrors] = useState<FieldErrors | undefined>(undefined);
   const [pending, startTransition] = useTransition();
+  const [savingBeforeNavigation, setSavingBeforeNavigation] = useState(false);
 
   /**
    * A recipe that has never been saved has no id to file images under, so it
@@ -90,9 +126,13 @@ export function RecipeEditor({
    * the session, which keeps every image from one sitting together.
    */
   const draftIdRef = useRef<string | null>(null);
+  const navigationSaveRef = useRef(false);
+  const allowNavigationRef = useRef(false);
 
   const isPublished = status === 'PUBLISHED';
   const canSplit = useMediaQuery(SPLIT_VIEW_QUERY);
+  const hasUnsavedNewRecipe = recipeId === undefined && hasRecipeContent(recipe);
+  const saving = pending || savingBeforeNavigation;
 
   /*
    * The window can be narrowed past the threshold with split view on. It falls
@@ -168,6 +208,98 @@ export function RecipeEditor({
     });
   }
 
+  /*
+   * A new recipe only exists in this component until its first save. Intercept
+   * links that would unmount the editor, create the draft, and then continue
+   * to the original destination. If the document is too incomplete to save,
+   * the author gets the explicit discard choice instead.
+   */
+  useEffect(() => {
+    if (!hasUnsavedNewRecipe) return;
+
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (allowNavigationRef.current) return;
+
+      event.preventDefault();
+      event.returnValue = true;
+    };
+
+    const followLink = (url: URL) => {
+      allowNavigationRef.current = true;
+
+      if (url.origin === window.location.origin) {
+        router.push(`${url.pathname}${url.search}${url.hash}`);
+      } else {
+        window.location.assign(url.href);
+      }
+    };
+
+    const saveBeforeFollowingLink = async (url: URL) => {
+      if (navigationSaveRef.current) return;
+
+      navigationSaveRef.current = true;
+      setSavingBeforeNavigation(true);
+      setMessage(null);
+
+      try {
+        const result = await saveRecipeAction(toFormValues(recipe, 'DRAFT'));
+
+        if (result.ok) {
+          setFieldErrors(undefined);
+          followLink(url);
+          return;
+        }
+
+        setFieldErrors(result.fieldErrors);
+        setMessage({ tone: 'error', text: result.message });
+
+        if (
+          window.confirm(
+            `${result.message}\n\nLeave this page anyway and lose your unsaved recipe?`,
+          )
+        ) {
+          followLink(url);
+        }
+      } finally {
+        navigationSaveRef.current = false;
+        setSavingBeforeNavigation(false);
+      }
+    };
+
+    const captureLink = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      const target = event.target;
+      const link = target instanceof Element ? target.closest<HTMLAnchorElement>('a[href]') : null;
+      if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
+
+      const url = new URL(link.href, window.location.href);
+      if (url.href === window.location.href || url.protocol === 'mailto:' || url.protocol === 'tel:') {
+        return;
+      }
+
+      event.preventDefault();
+      void saveBeforeFollowingLink(url);
+    };
+
+    window.addEventListener('beforeunload', beforeUnload);
+    document.addEventListener('click', captureLink, true);
+
+    return () => {
+      window.removeEventListener('beforeunload', beforeUnload);
+      document.removeEventListener('click', captureLink, true);
+    };
+  }, [hasUnsavedNewRecipe, recipe, router]);
+
   const byline = { authorName: blog.authorName, publishedAt };
   const indexHref = blogPath(blog.subdomain);
 
@@ -218,7 +350,7 @@ export function RecipeEditor({
             </Link>
           ) : null}
 
-          {pending ? (
+          {saving ? (
             <span className="editor__saving" role="status">
               Saving…
             </span>
@@ -247,13 +379,13 @@ export function RecipeEditor({
             </div>
           ) : null}
 
-          <Button variant="ghost" disabled={pending} onClick={() => save('DRAFT')}>
+          <Button variant="ghost" disabled={saving} onClick={() => save('DRAFT')}>
             {isPublished ? 'Unpublish' : 'Save draft'}
           </Button>
           <Button variant="secondary" onClick={() => setPreviewOpen(true)}>
             Preview
           </Button>
-          <Button disabled={pending} onClick={() => save('PUBLISHED')}>
+          <Button disabled={saving} onClick={() => save('PUBLISHED')}>
             {isPublished ? 'Update recipe' : 'Publish recipe'}
           </Button>
         </div>
@@ -295,7 +427,7 @@ export function RecipeEditor({
                       buildPathname={heroImagePathname}
                       onUploaded={(blob) => handleChange('featuredImageUrl', blob.url)}
                       label={recipe.featuredImageUrl ? 'Replace photo' : 'Upload photo'}
-                      disabled={pending}
+                      disabled={saving}
                     />
                   ),
                   stepPhotoUpload: ({ hasImage, onUploaded }) => (
@@ -314,7 +446,7 @@ export function RecipeEditor({
                           </>
                         )
                       }
-                      disabled={pending}
+                      disabled={saving}
                     />
                   ),
                   storyPhotoUpload: ({ hasImage, onUploaded }) => (
@@ -333,7 +465,7 @@ export function RecipeEditor({
                           </>
                         )
                       }
-                      disabled={pending}
+                      disabled={saving}
                     />
                   ),
                 }}

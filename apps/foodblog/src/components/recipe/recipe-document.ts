@@ -231,6 +231,24 @@ export function toFormValues(
   recipe: RecipeDocument,
   status: RecipeFormValues['status'],
 ): RecipeFormValues {
+  const ingredientGroups = recipe.ingredientGroups
+    .map((group) => ({
+      title: group.title,
+      ingredients: group.items
+        .filter((item) => item.text.trim() !== '')
+        .map((item) => ({ text: item.text })),
+    }))
+    .filter((group) => group.title.trim() !== '' || group.ingredients.length > 0);
+
+  const instructionGroups = recipe.instructionGroups
+    .map((group) => ({
+      title: group.title,
+      steps: group.items
+        .filter((item) => item.text.trim() !== '' || item.imageUrl.trim() !== '')
+        .map((item) => ({ text: item.text, imageUrl: item.imageUrl })),
+    }))
+    .filter((group) => group.title.trim() !== '' || group.steps.length > 0);
+
   return {
     title: recipe.title,
     slug: recipe.slug,
@@ -249,14 +267,8 @@ export function toFormValues(
     difficulty: recipe.difficulty,
     notes: recipe.notes,
     status,
-    ingredientGroups: recipe.ingredientGroups.map((group) => ({
-      title: group.title,
-      ingredients: group.items.map((item) => ({ text: item.text })),
-    })),
-    instructionGroups: recipe.instructionGroups.map((group) => ({
-      title: group.title,
-      steps: group.items.map((item) => ({ text: item.text, imageUrl: item.imageUrl })),
-    })),
+    ingredientGroups,
+    instructionGroups,
     groups: recipe.groups,
   };
 }

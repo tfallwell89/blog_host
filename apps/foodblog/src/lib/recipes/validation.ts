@@ -73,7 +73,6 @@ export const ingredientGroupSchema = z.object({
   title: optionalText(80, 'Keep group names under 80 characters'),
   ingredients: z
     .array(ingredientSchema)
-    .min(1, 'Add at least one ingredient to this group')
     .max(60, 'That is a lot of ingredients — split them into another group'),
 });
 
@@ -94,17 +93,14 @@ export const instructionGroupSchema = z.object({
     .max(40, 'That is a lot of steps — split them into another group'),
 });
 
-export const recipeInputSchema = z.object({
+const recipeBaseShape = {
   title: z
     .string()
     .trim()
-    .min(3, 'Give your recipe a title')
     .max(140, 'Keep the title under 140 characters'),
-  slug: recipeSlugSchema,
   description: z
     .string()
     .trim()
-    .min(10, 'Write a short description readers will see in the recipe index')
     .max(280, 'Keep the description under 280 characters'),
   introduction: optionalText(5000, 'Keep the introduction under 5000 characters'),
   storyTitle: optionalText(140, 'Keep the section heading under 140 characters'),
@@ -137,20 +133,60 @@ export const recipeInputSchema = z.object({
     .union([z.literal(''), z.enum(RECIPE_DIFFICULTY_VALUES)])
     .transform((value) => (value === '' ? null : value)),
   notes: optionalText(5000, 'Keep the notes under 5000 characters'),
-  status: z.enum(RECIPE_STATUS_VALUES),
   /** Names of the groups this recipe belongs to; missing ones are created. */
   groups: z
     .array(groupNameSchema)
     .max(MAX_GROUPS_PER_RECIPE, `A recipe can join ${MAX_GROUPS_PER_RECIPE} groups at most`),
   ingredientGroups: z
     .array(ingredientGroupSchema)
-    .min(1, 'A recipe needs at least one ingredient group')
     .max(15, 'Fifteen ingredient groups is the maximum'),
+};
+
+const publishedRecipeSchema = z.object({
+  ...recipeBaseShape,
+  title: recipeBaseShape.title.min(3, 'Give your recipe a title'),
+  slug: recipeSlugSchema,
+  description: recipeBaseShape.description.min(
+    10,
+    'Write a short description readers will see in the recipe index',
+  ),
+  status: z.literal('PUBLISHED'),
   instructionGroups: z
     .array(instructionGroupSchema)
-    .min(1, 'A recipe needs at least one instruction group')
     .max(15, 'Fifteen instruction groups is the maximum'),
 });
+
+const draftRecipeSchema = z.object({
+  ...recipeBaseShape,
+  // Draft addresses do not need to be publishable yet. An empty address gets
+  // an internal unique value so multiple untitled drafts can coexist.
+  slug: z
+    .string()
+    .trim()
+    .max(80, 'Keep the address under 80 characters')
+    .transform((value) => value || `draft-${crypto.randomUUID()}`),
+  status: z.literal('DRAFT'),
+  instructionGroups: z
+    .array(
+      z.object({
+        title: optionalText(80, 'Keep group names under 80 characters'),
+        steps: z
+          .array(
+            z.object({
+              text: z.string().trim().max(2000, 'Keep each step under 2000 characters'),
+              imageUrl: optionalImageUrl,
+            }),
+          )
+          .max(40, 'That is a lot of steps — split them into another group'),
+      }),
+    )
+    .max(15, 'Fifteen instruction groups is the maximum'),
+});
+
+export const recipeInputSchema = z.discriminatedUnion('status', [
+  draftRecipeSchema,
+  publishedRecipeSchema,
+]);
 
 /** Shape the editor sends over the wire (every scalar is a string). */
 export type RecipeFormValues = z.input<typeof recipeInputSchema>;

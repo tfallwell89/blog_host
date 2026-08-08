@@ -668,6 +668,11 @@ function RecipeGroups({
   ordered = false,
 }: RecipeGroupsProps) {
   const groups = recipe[field];
+  const hasContent = groups.some(
+    (group) =>
+      group.title.trim() !== '' ||
+      group.items.some((item) => item.text.trim() !== '' || item.imageUrl.trim() !== ''),
+  );
 
   function setGroups(next: RecipeGroup[]) {
     edit?.onChange(field, next);
@@ -708,6 +713,8 @@ function RecipeGroups({
     setGroups([...groups, group]);
     if (firstLine) focusField(itemFieldId(firstLine.key));
   }
+
+  if (!edit && !hasContent) return null;
 
   return (
     <section aria-labelledby={headingId}>
