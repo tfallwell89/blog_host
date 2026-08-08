@@ -765,6 +765,11 @@
   color: var(--site-muted);
 }
 
+.recipe--editing .recipe__content > section {
+  padding-top: var(--ui-space-4);
+  border-top: 1px solid var(--site-border);
+}
+
 .recipe--editing .recipe__notes .editable {
   margin-top: var(--ui-space-3);
 }
