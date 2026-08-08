@@ -228,10 +228,23 @@ html:has(.site) {
 .recipe-card {
   display: flex;
   flex-direction: column;
+  height: 100%;
   overflow: hidden;
+  color: var(--site-text);
+  text-decoration: none;
   background-color: var(--site-surface);
   border: 1px solid var(--site-border);
   border-radius: var(--site-radius);
+}
+
+.recipe-card:hover,
+.recipe-card:focus-visible {
+  border-color: var(--site-accent);
+}
+
+.recipe-card:focus-visible {
+  outline: 2px solid var(--site-accent);
+  outline-offset: 2px;
 }
 
 .recipe-card__image {
@@ -262,14 +275,11 @@ html:has(.site) {
 .recipe-card__title {
   margin: 0;
   font-size: 1.1875rem;
-}
-
-.recipe-card__title a {
   color: var(--site-text);
-  text-decoration: none;
 }
 
-.recipe-card__title a:hover {
+.recipe-card:hover .recipe-card__title,
+.recipe-card:focus-visible .recipe-card__title {
   color: var(--site-accent-ink);
 }
 

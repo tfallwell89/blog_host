@@ -62,26 +62,26 @@ export function RecipeIndex({ recipes, subdomain }: RecipeIndexProps) {
       ) : (
         <ul className="recipe-grid">
           {visible.map((recipe) => (
-            <li className="recipe-card" key={recipe.id}>
-              {recipe.imageUrl ? (
-                <img
-                  className="recipe-card__image"
-                  src={recipe.imageUrl}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : (
-                <div className="recipe-card__image" />
-              )}
-              <div className="recipe-card__body">
-                {recipe.eyebrow ? <p className="recipe-card__eyebrow">{recipe.eyebrow}</p> : null}
-                <h3 className="recipe-card__title">
-                  <Link href={blogRecipePath(subdomain, recipe.slug)}>{recipe.title}</Link>
-                </h3>
-                <p className="recipe-card__description">{recipe.description}</p>
-                {recipe.timing ? <p className="recipe-card__meta">{recipe.timing}</p> : null}
-              </div>
+            <li key={recipe.id}>
+              <Link className="recipe-card" href={blogRecipePath(subdomain, recipe.slug)}>
+                {recipe.imageUrl ? (
+                  <img
+                    className="recipe-card__image"
+                    src={recipe.imageUrl}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <div className="recipe-card__image" />
+                )}
+                <div className="recipe-card__body">
+                  {recipe.eyebrow ? <p className="recipe-card__eyebrow">{recipe.eyebrow}</p> : null}
+                  <h3 className="recipe-card__title">{recipe.title}</h3>
+                  <p className="recipe-card__description">{recipe.description}</p>
+                  {recipe.timing ? <p className="recipe-card__meta">{recipe.timing}</p> : null}
+                </div>
+              </Link>
             </li>
           ))}
         </ul>
