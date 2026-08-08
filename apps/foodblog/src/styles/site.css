@@ -369,6 +369,7 @@ html:has(.site) {
 }
 
 .recipe__intro p,
+.recipe-story__body p,
 .recipe__notes p {
   margin: 0 0 var(--ui-space-3);
   font-size: 1.0625rem;
@@ -376,8 +377,21 @@ html:has(.site) {
 }
 
 .recipe__intro p:last-child,
+.recipe-story__body p:last-child,
 .recipe__notes p:last-child {
   margin-bottom: 0;
+}
+
+.recipe__story {
+  min-width: 0;
+}
+
+.recipe-story__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: var(--ui-space-4);
+  border-radius: var(--site-radius);
 }
 
 /* Ingredients beside instructions, inside the one reading column: the shopping

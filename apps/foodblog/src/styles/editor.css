@@ -730,9 +730,17 @@
 }
 
 .recipe--editing .recipe__intro .editable,
+.recipe--editing .recipe-story__body .editable,
 .recipe--editing .recipe__notes .editable {
   font-size: 1.0625rem;
   line-height: 1.75;
+}
+
+.recipe-story-photo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  margin-top: var(--ui-space-3);
 }
 
 .recipe--editing .recipe__notes .editable {

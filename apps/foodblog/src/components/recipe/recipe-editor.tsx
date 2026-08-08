@@ -100,7 +100,7 @@ export function RecipeEditor({
    */
   const splitting = view === 'split' && canSplit;
 
-  function recipeImagePathname(purpose: 'hero' | 'step', contentType: string): string {
+  function recipeImagePathname(purpose: 'hero' | 'step' | 'inline', contentType: string): string {
     if (recipeId) {
       return buildRecipeImagePathname({ recipeId, purpose, contentType });
     }
@@ -300,6 +300,25 @@ export function RecipeEditor({
                   stepPhotoUpload: ({ hasImage, onUploaded }) => (
                     <ImageUploadButton
                       buildPathname={(contentType) => recipeImagePathname('step', contentType)}
+                      onUploaded={(blob) => onUploaded(blob.url)}
+                      label={
+                        hasImage ? (
+                          'Replace photo'
+                        ) : (
+                          <>
+                            <span className="step-photo-editor__add-icon" aria-hidden="true">
+                              +
+                            </span>
+                            <span>Add photo</span>
+                          </>
+                        )
+                      }
+                      disabled={pending}
+                    />
+                  ),
+                  storyPhotoUpload: ({ hasImage, onUploaded }) => (
+                    <ImageUploadButton
+                      buildPathname={(contentType) => recipeImagePathname('inline', contentType)}
                       onUploaded={(blob) => onUploaded(blob.url)}
                       label={
                         hasImage ? (

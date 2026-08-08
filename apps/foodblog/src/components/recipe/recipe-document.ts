@@ -15,6 +15,9 @@ export interface RecipeDocument {
   slug: string;
   description: string;
   introduction: string;
+  storyTitle: string;
+  storyBody: string;
+  storyImageUrl: string;
   featuredImageUrl: string;
   prepMinutes: string;
   cookMinutes: string;
@@ -233,6 +236,9 @@ export function toFormValues(
     slug: recipe.slug,
     description: recipe.description,
     introduction: recipe.introduction,
+    storyTitle: recipe.storyTitle,
+    storyBody: recipe.storyBody,
+    storyImageUrl: recipe.storyImageUrl,
     featuredImageUrl: recipe.featuredImageUrl,
     prepMinutes: recipe.prepMinutes,
     cookMinutes: recipe.cookMinutes,
@@ -264,6 +270,9 @@ export interface StoredRecipe {
   slug: string;
   description: string;
   introduction: string | null;
+  storyTitle: string | null;
+  storyBody: string | null;
+  storyImageUrl: string | null;
   featuredImageUrl: string | null;
   prepMinutes: number | null;
   cookMinutes: number | null;
@@ -310,6 +319,9 @@ export function toRecipeDocument(recipe: StoredRecipe): RecipeDocument {
     slug: recipe.slug,
     description: recipe.description,
     introduction: recipe.introduction ?? '',
+    storyTitle: recipe.storyTitle ?? '',
+    storyBody: recipe.storyBody ?? '',
+    storyImageUrl: recipe.storyImageUrl ?? '',
     featuredImageUrl: recipe.featuredImageUrl ?? '',
     prepMinutes: numberToField(recipe.prepMinutes),
     cookMinutes: numberToField(recipe.cookMinutes),
@@ -335,6 +347,9 @@ export function emptyRecipeDocument(): RecipeDocument {
     slug: '',
     description: '',
     introduction: '',
+    storyTitle: '',
+    storyBody: '',
+    storyImageUrl: '',
     featuredImageUrl: '',
     prepMinutes: '',
     cookMinutes: '',

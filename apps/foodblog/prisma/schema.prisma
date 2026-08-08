@@ -103,6 +103,9 @@ model Recipe {
   slug              String
   description       String
   introduction      String?
+  storyTitle        String?
+  storyBody         String?
+  storyImageUrl     String?
   featuredImageUrl  String?
   prepMinutes       Int?
   cookMinutes       Int?

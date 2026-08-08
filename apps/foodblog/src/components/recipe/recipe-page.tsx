@@ -84,6 +84,10 @@ export interface RecipeEditContext {
     hasImage: boolean;
     onUploaded: (url: string) => void;
   }) => ReactNode;
+  storyPhotoUpload?: (options: {
+    hasImage: boolean;
+    onUploaded: (url: string) => void;
+  }) => ReactNode;
 }
 
 interface RecipePageBaseProps {
@@ -116,6 +120,7 @@ export function RecipePage(props: RecipePageProps) {
       <RecipeImage recipe={recipe} edit={edit} />
       <RecipeFacts recipe={recipe} edit={edit} />
       <RecipeIntroduction recipe={recipe} edit={edit} />
+      <RecipeStory recipe={recipe} edit={edit} />
 
       {/* The two lists a cook reads together, side by side on a wide screen. */}
       <div className="recipe__content">
@@ -381,6 +386,106 @@ function RecipeIntroduction({ recipe, edit }: SectionProps) {
         minRows={3}
       />
     </div>
+  );
+}
+
+function RecipeStory({ recipe, edit }: SectionProps) {
+  const hasStory = Boolean(recipe.storyTitle || recipe.storyBody || recipe.storyImageUrl);
+
+  if (!edit) {
+    if (!hasStory) return null;
+
+    return (
+      <section className="recipe__story">
+        {recipe.storyTitle ? (
+          <h2 className="recipe__section-title">{recipe.storyTitle}</h2>
+        ) : null}
+        {recipe.storyBody ? <Prose className="recipe-story__body" text={recipe.storyBody} /> : null}
+        {recipe.storyImageUrl ? (
+          <img
+            className="recipe-story__image"
+            src={recipe.storyImageUrl}
+            alt={recipe.storyTitle || `More about ${recipe.title}`}
+            decoding="async"
+            loading="lazy"
+          />
+        ) : null}
+      </section>
+    );
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const dropped =
+      event.dataTransfer.getData('text/uri-list') || event.dataTransfer.getData('text/plain');
+
+    if (dropped.trim()) edit?.onChange('storyImageUrl', dropped.trim());
+  }
+
+  return (
+    <section className="recipe__story">
+      <h2 className="recipe__section-title">
+        <EditableText
+          value={recipe.storyTitle}
+          onChange={(value) => edit.onChange('storyTitle', value)}
+          label="Section heading"
+          placeholder="What makes this recipe special"
+          error={edit.fieldErrors?.storyTitle}
+          singleLine
+        />
+      </h2>
+
+      <div className="recipe-story__body">
+        <EditableText
+          value={recipe.storyBody}
+          onChange={(value) => edit.onChange('storyBody', value)}
+          label="Section body"
+          placeholder="Share the story, technique, or serving idea behind this recipe…"
+          error={edit.fieldErrors?.storyBody}
+          minRows={4}
+        />
+      </div>
+
+      <div
+        className="recipe-story-photo"
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={handleDrop}
+      >
+        {recipe.storyImageUrl ? (
+          <img
+            className="recipe-story__image"
+            src={recipe.storyImageUrl}
+            alt={recipe.storyTitle || `More about ${recipe.title}`}
+            decoding="async"
+          />
+        ) : null}
+
+        <div className="step-photo-editor__actions">
+          <EditableText
+            className="step-photo-editor__url"
+            value={recipe.storyImageUrl}
+            onChange={(value) => edit.onChange('storyImageUrl', value)}
+            label="Section image URL"
+            placeholder="Paste an image URL"
+            error={edit.fieldErrors?.storyImageUrl}
+            singleLine
+          />
+          {edit.storyPhotoUpload?.({
+            hasImage: Boolean(recipe.storyImageUrl),
+            onUploaded: (imageUrl) => edit.onChange('storyImageUrl', imageUrl),
+          })}
+          {recipe.storyImageUrl ? (
+            <CanvasControl
+              label="Remove section photo"
+              tone="danger"
+              onClick={() => edit.onChange('storyImageUrl', '')}
+            >
+              ✕
+            </CanvasControl>
+          ) : null}
+        </div>
+      </div>
+    </section>
   );
 }
 

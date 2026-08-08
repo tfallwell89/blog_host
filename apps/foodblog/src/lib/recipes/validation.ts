@@ -107,6 +107,9 @@ export const recipeInputSchema = z.object({
     .min(10, 'Write a short description readers will see in the recipe index')
     .max(280, 'Keep the description under 280 characters'),
   introduction: optionalText(5000, 'Keep the introduction under 5000 characters'),
+  storyTitle: optionalText(140, 'Keep the section heading under 140 characters'),
+  storyBody: optionalText(10000, 'Keep the section body under 10000 characters'),
+  storyImageUrl: optionalImageUrl,
   featuredImageUrl: optionalImageUrl,
   prepMinutes: optionalWholeNumber({
     max: MINUTES_IN_A_WEEK,
