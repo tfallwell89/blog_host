@@ -759,9 +759,51 @@
   align-items: flex-start;
 }
 
+.recipe--editing .recipe-step {
+  flex: 1;
+}
+
 .recipe--editing .recipe-line {
   flex: 1;
   min-width: 0;
+}
+
+.step-photo-editor {
+  margin-top: var(--ui-space-2);
+}
+
+.step-photo-editor__actions {
+  --step-photo-edge-offset: calc(0.35rem + 1px);
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+  align-items: flex-start;
+  margin-top: var(--ui-space-2);
+}
+
+.step-photo-editor__url {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin-block: 0;
+  margin-left: calc(-1 * var(--step-photo-edge-offset));
+  margin-right: 0;
+  font-family: var(--ui-font-sans);
+  font-size: 0.8125rem;
+  color: var(--site-muted);
+}
+
+.step-photo-editor__url .editable__input {
+  min-height: 1.875rem;
+}
+
+.step-photo-editor__actions > .stack {
+  gap: 0;
+  margin-right: calc(-1 * var(--step-photo-edge-offset));
+}
+
+.step-photo-editor__actions > .canvas-control {
+  margin-top: 0.05rem;
 }
 
 .recipe--editing .ingredient-list li .canvas-controls,

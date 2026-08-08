@@ -47,7 +47,11 @@ function nestedGroupsData(input: RecipeInput) {
         title: group.title,
         position: groupIndex,
         steps: {
-          create: group.steps.map((step, index) => ({ text: step.text, position: index })),
+          create: group.steps.map((step, index) => ({
+            text: step.text,
+            imageUrl: step.imageUrl,
+            position: index,
+          })),
         },
       })),
     },

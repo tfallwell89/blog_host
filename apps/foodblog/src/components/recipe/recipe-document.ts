@@ -46,6 +46,8 @@ export interface RecipeGroup {
 export interface RecipeItem {
   key: string;
   text: string;
+  /** Used by instruction steps; ingredient items leave this empty. */
+  imageUrl: string;
 }
 
 /** Keys of the two group collections, used to address them generically. */
@@ -71,7 +73,7 @@ export function nextKey(prefix: string): string {
 }
 
 export function emptyItem(): RecipeItem {
-  return { key: nextKey('item'), text: '' };
+  return { key: nextKey('item'), text: '', imageUrl: '' };
 }
 
 export function emptyGroup(): RecipeGroup {
@@ -221,13 +223,6 @@ export function recipeFacts(recipe: RecipeDocument, includeEmpty: boolean): Reci
 
 /* Conversions ------------------------------------------------------------- */
 
-function toWireGroups(groups: RecipeGroup[]) {
-  return groups.map((group) => ({
-    title: group.title,
-    items: group.items.map((item) => ({ text: item.text })),
-  }));
-}
-
 /** Converts the document into the payload the server action validates. */
 export function toFormValues(
   recipe: RecipeDocument,
@@ -248,13 +243,13 @@ export function toFormValues(
     difficulty: recipe.difficulty,
     notes: recipe.notes,
     status,
-    ingredientGroups: toWireGroups(recipe.ingredientGroups).map((group) => ({
+    ingredientGroups: recipe.ingredientGroups.map((group) => ({
       title: group.title,
-      ingredients: group.items,
+      ingredients: group.items.map((item) => ({ text: item.text })),
     })),
-    instructionGroups: toWireGroups(recipe.instructionGroups).map((group) => ({
+    instructionGroups: recipe.instructionGroups.map((group) => ({
       title: group.title,
-      steps: group.items,
+      steps: group.items.map((item) => ({ text: item.text, imageUrl: item.imageUrl })),
     })),
     groups: recipe.groups,
   };
@@ -279,11 +274,16 @@ export interface StoredRecipe {
   difficulty: string | null;
   notes: string | null;
   ingredientGroups: { title: string | null; ingredients: { text: string }[] }[];
-  instructionGroups: { title: string | null; steps: { text: string }[] }[];
+  instructionGroups: {
+    title: string | null;
+    steps: { text: string; imageUrl: string | null }[];
+  }[];
   groups: { group: { name: string } }[];
 }
 
-function toGroups(groups: { title: string | null; items: { text: string }[] }[]): RecipeGroup[] {
+function toGroups(
+  groups: { title: string | null; items: { text: string; imageUrl?: string | null }[] }[],
+): RecipeGroup[] {
   if (groups.length === 0) return [emptyGroup()];
 
   return groups.map((group) => ({
@@ -291,7 +291,11 @@ function toGroups(groups: { title: string | null; items: { text: string }[] }[])
     title: group.title ?? '',
     items:
       group.items.length > 0
-        ? group.items.map((item) => ({ key: nextKey('item'), text: item.text }))
+        ? group.items.map((item) => ({
+            key: nextKey('item'),
+            text: item.text,
+            imageUrl: item.imageUrl ?? '',
+          }))
         : [emptyItem()],
   }));
 }

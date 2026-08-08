@@ -100,13 +100,17 @@ export function RecipeEditor({
    */
   const splitting = view === 'split' && canSplit;
 
-  function heroImagePathname(contentType: string): string {
+  function recipeImagePathname(purpose: 'hero' | 'step', contentType: string): string {
     if (recipeId) {
-      return buildRecipeImagePathname({ recipeId, purpose: 'hero', contentType });
+      return buildRecipeImagePathname({ recipeId, purpose, contentType });
     }
 
     draftIdRef.current ??= crypto.randomUUID();
-    return buildRecipeImagePathname({ draftId: draftIdRef.current, purpose: 'hero', contentType });
+    return buildRecipeImagePathname({ draftId: draftIdRef.current, purpose, contentType });
+  }
+
+  function heroImagePathname(contentType: string): string {
+    return recipeImagePathname('hero', contentType);
   }
 
   function handleChange<K extends keyof RecipeDocument>(field: K, value: RecipeDocument[K]) {
@@ -290,6 +294,14 @@ export function RecipeEditor({
                       buildPathname={heroImagePathname}
                       onUploaded={(blob) => handleChange('featuredImageUrl', blob.url)}
                       label={recipe.featuredImageUrl ? 'Replace photo' : 'Upload photo'}
+                      disabled={pending}
+                    />
+                  ),
+                  stepPhotoUpload: ({ hasImage, onUploaded }) => (
+                    <ImageUploadButton
+                      buildPathname={(contentType) => recipeImagePathname('step', contentType)}
+                      onUploaded={(blob) => onUploaded(blob.url)}
+                      label={hasImage ? 'Replace photo' : 'Add photo'}
                       disabled={pending}
                     />
                   ),

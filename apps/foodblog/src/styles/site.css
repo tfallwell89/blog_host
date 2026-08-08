@@ -441,6 +441,19 @@ html:has(.site) {
   counter-increment: step;
 }
 
+.recipe-step {
+  min-width: 0;
+  width: 100%;
+}
+
+.recipe-step__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: var(--ui-space-3);
+  border-radius: var(--site-radius);
+}
+
 .step-list li::before {
   position: absolute;
   top: 0.1rem;

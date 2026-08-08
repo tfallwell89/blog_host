@@ -21,6 +21,15 @@ function optionalText(max: number, tooLong: string) {
     .transform((value) => (value === '' ? null : value));
 }
 
+const optionalImageUrl = z
+  .string()
+  .trim()
+  .refine(
+    (value) => value === '' || isHttpUrl(value),
+    'Enter a valid image URL starting with http:// or https://',
+  )
+  .transform((value) => (value === '' ? null : value));
+
 function optionalWholeNumber(options: { max: number; label: string; tooLarge: string }) {
   return z
     .string()
@@ -74,6 +83,7 @@ export const instructionStepSchema = z.object({
     .trim()
     .min(1, 'Describe what the cook should do')
     .max(2000, 'Keep each step under 2000 characters'),
+  imageUrl: optionalImageUrl,
 });
 
 export const instructionGroupSchema = z.object({
@@ -97,14 +107,7 @@ export const recipeInputSchema = z.object({
     .min(10, 'Write a short description readers will see in the recipe index')
     .max(280, 'Keep the description under 280 characters'),
   introduction: optionalText(5000, 'Keep the introduction under 5000 characters'),
-  featuredImageUrl: z
-    .string()
-    .trim()
-    .refine(
-      (value) => value === '' || isHttpUrl(value),
-      'Enter a valid image URL starting with http:// or https://',
-    )
-    .transform((value) => (value === '' ? null : value)),
+  featuredImageUrl: optionalImageUrl,
   prepMinutes: optionalWholeNumber({
     max: MINUTES_IN_A_WEEK,
     label: 'Prep time',

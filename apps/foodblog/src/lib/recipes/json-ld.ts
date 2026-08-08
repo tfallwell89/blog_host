@@ -31,6 +31,7 @@ export function buildRecipeJsonLd({
       '@type': 'HowToStep',
       position: stepIndex + 1,
       text: step.text,
+      ...(step.imageUrl ? { image: step.imageUrl } : {}),
     })),
   }));
 

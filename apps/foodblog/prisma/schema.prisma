@@ -207,9 +207,10 @@ model InstructionGroup {
 }
 
 model InstructionStep {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   groupId  String
   text     String
+  imageUrl String?
   position Int
 
   group InstructionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)

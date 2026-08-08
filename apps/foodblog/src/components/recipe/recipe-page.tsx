@@ -27,6 +27,7 @@ import {
   type RecipeDocument,
   type RecipeGroup,
   type RecipeGroupField,
+  type RecipeItem,
 } from './recipe-document';
 
 /**
@@ -75,6 +76,14 @@ export interface RecipeEditContext {
    * upload client to readers.
    */
   photoUpload?: ReactNode;
+  /**
+   * Creates an uploader for one instruction step without adding the Blob
+   * client to published recipe bundles.
+   */
+  stepPhotoUpload?: (options: {
+    hasImage: boolean;
+    onUploaded: (url: string) => void;
+  }) => ReactNode;
 }
 
 interface RecipePageBaseProps {
@@ -474,6 +483,67 @@ interface RecipeGroupsProps extends SectionProps {
   ordered?: boolean;
 }
 
+function StepPhotoField({
+  item,
+  stepNumber,
+  onChange,
+  upload,
+  error,
+}: {
+  item: RecipeItem;
+  stepNumber: number;
+  onChange: (imageUrl: string) => void;
+  upload?: ReactNode;
+  error?: string;
+}) {
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const dropped =
+      event.dataTransfer.getData('text/uri-list') || event.dataTransfer.getData('text/plain');
+
+    if (dropped.trim()) onChange(dropped.trim());
+  }
+
+  return (
+    <div
+      className={cn('step-photo-editor', item.imageUrl && 'step-photo-editor--has-image')}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={handleDrop}
+    >
+      {item.imageUrl ? (
+        <img
+          className="recipe-step__image"
+          src={item.imageUrl}
+          alt={`Photo for step ${stepNumber}`}
+          decoding="async"
+        />
+      ) : null}
+
+      <div className="step-photo-editor__actions">
+        <EditableText
+          className="step-photo-editor__url"
+          value={item.imageUrl}
+          onChange={onChange}
+          label={`Image URL for step ${stepNumber}`}
+          placeholder="Paste an image URL"
+          error={error}
+          singleLine
+        />
+        {upload}
+        {item.imageUrl ? (
+          <CanvasControl
+            label={`Remove photo from step ${stepNumber}`}
+            tone="danger"
+            onClick={() => onChange('')}
+          >
+            ✕
+          </CanvasControl>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function RecipeGroups({
   recipe,
   edit,
@@ -488,6 +558,19 @@ function RecipeGroups({
 
   function setGroups(next: RecipeGroup[]) {
     edit?.onChange(field, next);
+  }
+
+  function updateItem(
+    groupIndex: number,
+    itemIndex: number,
+    updater: (item: RecipeItem) => RecipeItem,
+  ) {
+    setGroups(
+      updateAt(groups, groupIndex, (group) => ({
+        ...group,
+        items: updateAt(group.items, itemIndex, updater),
+      })),
+    );
   }
 
   function itemFieldId(itemKey: string): string {
@@ -530,84 +613,126 @@ function RecipeGroups({
           edit?.fieldErrors?.[`${field}.${groupIndex}.title`] ??
           edit?.fieldErrors?.[`${field}.${groupIndex}.${itemsKey}`];
 
-        const lines = group.items.map((item, itemIndex) => (
-          <li key={item.key}>
-            {edit ? (
-              <>
-                <EditableText
-                  className="recipe-line"
-                  fieldId={itemFieldId(item.key)}
-                  value={item.text}
-                  onChange={(value) =>
-                    setGroups(
-                      updateAt(groups, groupIndex, (current) => ({
-                        ...current,
-                        items: updateAt(current.items, itemIndex, (currentItem) => ({
-                          ...currentItem,
-                          text: value,
-                        })),
-                      })),
-                    )
-                  }
-                  label={`${labels.item} ${itemIndex + 1}`}
-                  placeholder={labels.itemPlaceholder}
-                  error={edit.fieldErrors?.[`${field}.${groupIndex}.${itemsKey}.${itemIndex}.text`]}
-                  singleLine={!ordered}
-                  minRows={ordered ? 2 : 1}
-                  onEnter={() => addItem(groupIndex, itemIndex + 1)}
-                />
+        const lines = group.items.map((item, itemIndex) => {
+          const stepNumber = itemIndex + 1;
 
-                <span className="canvas-controls">
-                  <CanvasControl
-                    label={`Move ${labels.item.toLowerCase()} ${itemIndex + 1} up`}
-                    disabled={itemIndex === 0}
-                    onClick={() =>
-                      setGroups(
-                        updateAt(groups, groupIndex, (current) => ({
+          return (
+            <li key={item.key}>
+              {edit ? (
+                <>
+                  <div className="recipe-step">
+                    <EditableText
+                      className="recipe-line"
+                      fieldId={itemFieldId(item.key)}
+                      value={item.text}
+                      onChange={(value) =>
+                        updateItem(groupIndex, itemIndex, (current) => ({
                           ...current,
-                          items: moveBy(current.items, itemIndex, -1),
-                        })),
-                      )
-                    }
-                  >
-                    ↑
-                  </CanvasControl>
-                  <CanvasControl
-                    label={`Move ${labels.item.toLowerCase()} ${itemIndex + 1} down`}
-                    disabled={itemIndex === group.items.length - 1}
-                    onClick={() =>
-                      setGroups(
-                        updateAt(groups, groupIndex, (current) => ({
-                          ...current,
-                          items: moveBy(current.items, itemIndex, 1),
-                        })),
-                      )
-                    }
-                  >
-                    ↓
-                  </CanvasControl>
-                  <CanvasControl
-                    label={`${labels.removeItem} ${itemIndex + 1}`}
-                    tone="danger"
-                    disabled={group.items.length === 1}
-                    onClick={() =>
-                      setGroups(
-                        updateAt(groups, groupIndex, (current) => ({
-                          ...current,
-                          items: removeAt(current.items, itemIndex),
-                        })),
-                      )
-                    }
-                  >
-                    ✕
-                  </CanvasControl>
-                </span>
-              </>
-            ) : (
-              item.text
-            )}
-          </li>
-        ));
+                          text: value,
+                        }))
+                      }
+                      label={`${labels.item} ${itemIndex + 1}`}
+                      placeholder={labels.itemPlaceholder}
+                      error={
+                        edit.fieldErrors?.[
+                          `${field}.${groupIndex}.${itemsKey}.${itemIndex}.text`
+                        ]
+                      }
+                      singleLine={!ordered}
+                      minRows={ordered ? 2 : 1}
+                      onEnter={() => addItem(groupIndex, itemIndex + 1)}
+                    />
+
+                    {ordered ? (
+                      <StepPhotoField
+                        item={item}
+                        stepNumber={stepNumber}
+                        onChange={(imageUrl) =>
+                          updateItem(groupIndex, itemIndex, (current) => ({
+                            ...current,
+                            imageUrl,
+                          }))
+                        }
+                        upload={edit.stepPhotoUpload?.({
+                          hasImage: Boolean(item.imageUrl),
+                          onUploaded: (imageUrl) =>
+                            updateItem(groupIndex, itemIndex, (current) => ({
+                              ...current,
+                              imageUrl,
+                            })),
+                        })}
+                        error={
+                          edit.fieldErrors?.[
+                            `${field}.${groupIndex}.${itemsKey}.${itemIndex}.imageUrl`
+                          ]
+                        }
+                      />
+                    ) : null}
+                  </div>
+
+                  <span className="canvas-controls">
+                    <CanvasControl
+                      label={`Move ${labels.item.toLowerCase()} ${itemIndex + 1} up`}
+                      disabled={itemIndex === 0}
+                      onClick={() =>
+                        setGroups(
+                          updateAt(groups, groupIndex, (current) => ({
+                            ...current,
+                            items: moveBy(current.items, itemIndex, -1),
+                          })),
+                        )
+                      }
+                    >
+                      ↑
+                    </CanvasControl>
+                    <CanvasControl
+                      label={`Move ${labels.item.toLowerCase()} ${itemIndex + 1} down`}
+                      disabled={itemIndex === group.items.length - 1}
+                      onClick={() =>
+                        setGroups(
+                          updateAt(groups, groupIndex, (current) => ({
+                            ...current,
+                            items: moveBy(current.items, itemIndex, 1),
+                          })),
+                        )
+                      }
+                    >
+                      ↓
+                    </CanvasControl>
+                    <CanvasControl
+                      label={`${labels.removeItem} ${itemIndex + 1}`}
+                      tone="danger"
+                      disabled={group.items.length === 1}
+                      onClick={() =>
+                        setGroups(
+                          updateAt(groups, groupIndex, (current) => ({
+                            ...current,
+                            items: removeAt(current.items, itemIndex),
+                          })),
+                        )
+                      }
+                    >
+                      ✕
+                    </CanvasControl>
+                  </span>
+                </>
+              ) : (
+                <div className="recipe-step">
+                  <span>{item.text}</span>
+                  {ordered && item.imageUrl ? (
+                    <img
+                      className="recipe-step__image"
+                      src={item.imageUrl}
+                      alt={`Photo for step ${stepNumber}`}
+                      decoding="async"
+                      loading="lazy"
+                    />
+                  ) : null}
+                </div>
+              )}
+            </li>
+          );
+        });
 
         return (
           <div className="recipe__group" key={group.key}>
