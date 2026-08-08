@@ -238,6 +238,7 @@
 .recipe-preview__stage--mobile {
   width: max-content;
   min-width: 100%;
+  background-color: #000000;
 }
 
 .recipe-preview__frame {
