@@ -301,7 +301,18 @@ export function RecipeEditor({
                     <ImageUploadButton
                       buildPathname={(contentType) => recipeImagePathname('step', contentType)}
                       onUploaded={(blob) => onUploaded(blob.url)}
-                      label={hasImage ? 'Replace photo' : 'Add photo'}
+                      label={
+                        hasImage ? (
+                          'Replace photo'
+                        ) : (
+                          <>
+                            <span className="step-photo-editor__add-icon" aria-hidden="true">
+                              +
+                            </span>
+                            <span>Add photo</span>
+                          </>
+                        )
+                      }
                       disabled={pending}
                     />
                   ),

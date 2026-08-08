@@ -3,7 +3,7 @@
 import { Button } from '@bloghost/ui';
 import type { PutBlobResult } from '@vercel/blob';
 import { upload } from '@vercel/blob/client';
-import { useRef, useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 
 import { MAX_UPLOAD_BYTES, SUPPORTED_CONTENT_TYPES } from '@/lib/uploads/blob-pathname';
 
@@ -14,7 +14,7 @@ export interface ImageUploadButtonProps {
    */
   buildPathname: (contentType: string) => string;
   onUploaded: (blob: PutBlobResult) => void;
-  label?: string;
+  label?: ReactNode;
   disabled?: boolean;
 }
 
